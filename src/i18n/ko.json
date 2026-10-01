@@ -28,7 +28,7 @@
   "hero.github": "GitHub",
   "hero.stat.size": "바이너리 하나, 설치할 런타임 없음",
   "hero.stat.speed": "GitHub CI에서 nuxt 콜드 설치",
-  "hero.stat.age": "새 버전이 들어오기 전 대기 시간",
+  "hero.stat.memory": "GitHub CI에서 nuxt 설치에 쓰는 메모리",
   "speed.eyebrow": "속도",
   "speed.title": "CI가 시간을 쓰는 곳에서 빠르게",
   "speed.lead": "실제 프로젝트 3개, 설치 단계 4가지, 패키지 매니저 8개를 실제 npm 레지스트리에서 측정했습니다. GitHub CI에서 jpm은 12개 칸 중 9개에서 가장 빠르며, 나머지 3개도 측정한 그대로 보여 줍니다.",

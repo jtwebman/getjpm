@@ -28,7 +28,7 @@
   "hero.github": "GitHub",
   "hero.stat.size": "um binário, sem runtime para instalar",
   "hero.stat.speed": "instalação a frio do nuxt no GitHub CI",
-  "hero.stat.age": "antes de uma versão nova entrar",
+  "hero.stat.memory": "de memória para instalar o nuxt no GitHub CI",
   "speed.eyebrow": "Velocidade",
   "speed.title": "Rápido onde o seu CI gasta tempo",
   "speed.lead": "Três projetos reais, quatro fases de instalação, oito gerenciadores de pacotes, contra o registro do npm ao vivo. No GitHub CI, o jpm é o mais rápido em 9 de 12 casos; os outros três aparecem exatamente como foram medidos.",

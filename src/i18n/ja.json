@@ -28,7 +28,7 @@
   "hero.github": "GitHub",
   "hero.stat.size": "単一バイナリ、ランタイムのインストール不要",
   "hero.stat.speed": "GitHub CI での nuxt のコールドインストール",
-  "hero.stat.age": "新バージョンを取り込むまでの待ち時間",
+  "hero.stat.memory": "GitHub CI で nuxt のインストールに使うメモリ",
   "speed.eyebrow": "速度",
   "speed.title": "CI が時間を使うところで速い",
   "speed.lead": "実在する 3 つのプロジェクト、4 つのインストールフェーズ、8 つのパッケージマネージャーを、本番の npm レジストリに対して計測しました。GitHub CI では 12 セル中 9 セルで jpm が最速です。残り 3 セルも計測結果のまま掲載しています。",

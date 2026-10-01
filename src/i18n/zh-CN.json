@@ -28,7 +28,7 @@
   "hero.github": "GitHub",
   "hero.stat.size": "单个二进制文件，无需安装运行时",
   "hero.stat.speed": "在 GitHub CI 上冷安装 nuxt",
-  "hero.stat.age": "新版本被引入前的等待时间",
+  "hero.stat.memory": "在 GitHub CI 上安装 nuxt 所用的内存",
   "speed.eyebrow": "速度",
   "speed.title": "快在 CI 最耗时的地方",
   "speed.lead": "三个真实项目、四个安装阶段、八个包管理器，直接对接线上 npm registry。在 GitHub CI 上，jpm 在 12 项中的 9 项最快；另外三项按实测结果如实展示。",

@@ -28,7 +28,7 @@
   "hero.github": "GitHub",
   "hero.stat.size": "one binary, no runtime to install",
   "hero.stat.speed": "cold nuxt install on GitHub CI",
-  "hero.stat.age": "before a new version gets in",
+  "hero.stat.memory": "memory used to install nuxt on GitHub CI",
   "speed.eyebrow": "Speed",
   "speed.title": "Fast where your CI spends its time",
   "speed.lead": "Three real projects, four install phases, eight package managers, against the live npm registry. On GitHub CI jpm is the fastest in 9 of 12 cells; the other three are shown as measured.",
