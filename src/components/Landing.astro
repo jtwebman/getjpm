@@ -1,0 +1,38 @@
+---
+// The home page, in any locale: the sections in order.
+import Base from '../layouts/Base.astro';
+import Hero from './Hero.astro';
+import SpeedChart from './SpeedChart.astro';
+import Lean from './Lean.astro';
+import StorageDiagram from './StorageDiagram.astro';
+import Security from './Security.astro';
+import Switch from './Switch.astro';
+import Story from './Story.astro';
+import { useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<Base locale={locale}>
+  <div id="top"></div>
+  <Hero locale={locale} />
+  <section id="speed" class="section feature" aria-labelledby="speed-title">
+    <div class="container feature-grid">
+      <div class="feature-text">
+        <p class="eyebrow">{t('speed.eyebrow')}</p>
+        <h2 id="speed-title" class="section-title">{t('speed.title')}</h2>
+        <p class="lead">{t('speed.lead')}</p>
+      </div>
+      <SpeedChart locale={locale} />
+    </div>
+  </section>
+  <Switch locale={locale} />
+  <Lean locale={locale} />
+  <StorageDiagram locale={locale} />
+  <Security locale={locale} />
+  <Story locale={locale} />
+</Base>

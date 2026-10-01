@@ -1,0 +1,104 @@
+---
+// Security defaults, as jpm's docs state them (install-scripts.md, configuration.md,
+// git-dependencies.md, directory-dependencies.md, runtimes.md).
+import { docs, link, useTranslations, type Key, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+// 24x24 stroke icons, drawn for this page.
+const icons: Record<string, string> = {
+  scripts: '<path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/>',
+  age: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>',
+  exotic: '<path d="M9.5 14.5 7 17a3.5 3.5 0 0 1-5-5l2.5-2.5M14.5 9.5 17 7a3.5 3.5 0 0 1 5 5l-2.5 2.5"/><path d="m4 4 16 16"/>',
+  integrity: '<path d="M20 7 9 18l-5-5"/><path d="M4 7h7M4 3h11"/>',
+  creds: '<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M14 9l2 2"/>',
+  npmrc: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5M9 15l2 2 4-4"/>',
+  tls: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>',
+  runtimes: '<path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"/><path d="M9 13h6M9 10h6M9 16h3"/>',
+  small: '<path d="m21 8-9-5-9 5v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+};
+const cards = Object.keys(icons);
+---
+
+<section id="security" class="section" aria-labelledby="security-title">
+  <div class="container">
+    <div class="section-head center">
+      <p class="eyebrow">{t('security.eyebrow')}</p>
+      <h2 id="security-title" class="section-title">{t('security.title')}</h2>
+      <p class="lead">{t('security.lead')}</p>
+    </div>
+    <ul class="cards">
+      {
+        cards.map((c) => (
+          <li class="card">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={icons[c]} />
+            <h3>{t(`security.${c}.title` as Key)}</h3>
+            <p set:html={t(`security.${c}.body` as Key)} />
+          </li>
+        ))
+      }
+    </ul>
+    <p
+      class="note center-note"
+      set:html={t('security.note', {
+        scripts: link(docs('install-scripts'), 'docs/install-scripts.md'),
+        config: link(docs('configuration'), 'docs/configuration.md'),
+      })}
+    />
+  </div>
+</section>
+
+<style>
+  @layer components {
+    .cards {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      gap: var(--size-4);
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    }
+    .card {
+      container-type: inline-size;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-3);
+      padding: var(--size-5);
+      display: grid;
+      gap: var(--size-2);
+      align-content: start;
+      transition: border-color 0.2s var(--ease-2), translate 0.2s var(--ease-2);
+      &:hover {
+        border-color: var(--accent);
+      }
+      & h3 {
+        font-size: var(--font-size-2);
+      }
+      & p {
+        color: var(--text-2);
+        font-size: 0.9375rem;
+      }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .card:hover {
+        translate: 0 -2px;
+      }
+    }
+    .icon {
+      inline-size: 2.5rem;
+      block-size: 2.5rem;
+      padding: 0.5rem;
+      border-radius: var(--radius-2);
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      margin-block-end: var(--size-1);
+    }
+    .center-note {
+      text-align: center;
+      margin-block-start: var(--size-6);
+    }
+  }
+</style>

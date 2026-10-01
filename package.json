@@ -1,0 +1,22 @@
+{
+  "name": "getjpm",
+  "private": true,
+  "type": "module",
+  "description": "The website for jpm, at https://getjpm.sh",
+  "license": "MIT",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "test": "node --test \"test/*.test.mjs\""
+  },
+  "dependencies": {
+    "astro": "7.3.5",
+    "open-props": "1.7.23"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "typescript": "6.0.3"
+  }
+}

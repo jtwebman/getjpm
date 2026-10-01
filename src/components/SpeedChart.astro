@@ -1,0 +1,227 @@
+---
+// Install wall time by machine, phase and project, from src/data/bench.ts. The first view is
+// rendered here; the script redraws it from the same data when a control changes.
+import { bench, fixtures, formatMs, type Env, type Fixture, type Phase } from '../data/bench';
+import { barsHTML } from '../scripts/bars';
+import { docs, link, useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const env: Env = 'github';
+const phase: Phase = 'cold';
+const fixture: Fixture = 'nuxt';
+
+const envs: Env[] = ['github', 'windows'];
+const phases: Phase[] = ['cold', 'warm', 'ci', 'repeat'];
+const fixtureNames = Object.keys(fixtures) as Fixture[];
+
+const envLabel = { github: t('speed.env.github'), windows: t('speed.env.windows') };
+const phaseLabel = Object.fromEntries(phases.map((p) => [p, t(`speed.phase.${p}`)]));
+const phaseDesc = Object.fromEntries(phases.map((p) => [p, t(`speed.phaseDesc.${p}`)]));
+const fixtureLabel = Object.fromEntries(fixtureNames.map((f) => [f, `${f} · ${t('speed.packages', { n: fixtures[f] })}`]));
+
+// Strings the script needs, in this page's language.
+const strings = {
+  envLabel,
+  phaseLabel,
+  phaseDesc,
+  fixtureLabel,
+  jpmFastest: t('speed.jpmFastest'),
+  otherFastest: t('speed.otherFastest'),
+};
+
+function view(e: Env, p: Phase, f: Fixture) {
+  const rows = bench[e].managers.map((m) => ({ name: m.name, version: m.version, value: m.times[p]![f] }));
+  const sorted = [...rows].sort((a, b) => a.value - b.value);
+  const jpm = rows.find((r) => r.name === 'jpm')!;
+  const npm = rows.find((r) => r.name === 'npm')!;
+  const ratio = npm.value / jpm.value;
+  const caption =
+    sorted[0].name === 'jpm'
+      ? strings.jpmFastest.replace('{ratio}', ratio >= 10 ? String(Math.round(ratio)) : ratio.toFixed(1))
+      : strings.otherFastest.replace('{name}', sorted[0].name).replace('{value}', formatMs(sorted[0].value)).replace('{jpm}', formatMs(jpm.value));
+  return { rows, sorted, caption };
+}
+const first = view(env, phase, fixture);
+const bars = barsHTML(first.rows.map((r) => ({ name: r.name, value: r.value, label: formatMs(r.value) })));
+---
+
+<div class="speed" data-speed data-strings={JSON.stringify(strings)}>
+  <div class="controls">
+    <fieldset class="segmented">
+      <legend>{t('speed.env')}</legend>
+      <div class="options">
+        {
+          envs.map((e) => (
+            <label>
+              <input type="radio" name="speed-env" value={e} checked={e === env} />
+              <span>{envLabel[e]}</span>
+            </label>
+          ))
+        }
+      </div>
+    </fieldset>
+    <fieldset class="segmented">
+      <legend>{t('speed.phase')}</legend>
+      <div class="options">
+        {
+          phases.map((p) => (
+            <label>
+              <input type="radio" name="speed-phase" value={p} checked={p === phase} aria-describedby={p === 'repeat' ? 'speed-norepeat' : undefined} />
+              <span>{phaseLabel[p]}</span>
+            </label>
+          ))
+        }
+      </div>
+    </fieldset>
+    <fieldset class="segmented">
+      <legend>{t('speed.fixture')}</legend>
+      <div class="options">
+        {
+          fixtureNames.map((f) => (
+            <label>
+              <input type="radio" name="speed-fixture" value={f} checked={f === fixture} />
+              <span>{f}</span>
+            </label>
+          ))
+        }
+      </div>
+    </fieldset>
+  </div>
+
+  <p class="phase-desc" data-phase-desc>{phaseDesc[phase]}</p>
+  <p class="sr-only" id="speed-norepeat" data-norepeat hidden>{t('speed.noRepeat')}</p>
+
+  <figure class="chart" aria-labelledby="speed-chart-title">
+    <figcaption id="speed-chart-title" class="chart-title">
+      <span>{t('speed.chartLabel')}</span>
+      <span class="chart-sub" data-chart-sub>{`${envLabel[env]} · ${fixtureLabel[fixture]}`}</span>
+    </figcaption>
+    <ol class="bars" data-bars aria-hidden="true" set:html={bars} />
+    <div class="sr-only"><table data-table>
+      <caption data-table-caption>{`${envLabel[env]}, ${phaseLabel[phase]}, ${fixtureLabel[fixture]}`}</caption>
+      <thead>
+        <tr><th scope="col">{t('speed.colManager')}</th><th scope="col">{t('speed.colTime')}</th></tr>
+      </thead>
+      <tbody data-table-body>
+        {
+          first.sorted.map((r) => (
+            <tr>
+              <th scope="row">{`${r.name} ${r.version}`.trim()}</th>
+              <td>{formatMs(r.value)}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table></div>
+  </figure>
+
+  <p class="verdict" data-verdict aria-live="polite">{first.caption}</p>
+  <p class="note windows-note" data-windows-note hidden>{t('speed.windowsNote')}</p>
+  <p class="note" set:html={t('speed.note', { link: link(docs('benchmarks'), 'docs/benchmarks.md') })} />
+</div>
+
+<script>
+  import { bench, formatMs, type Env, type Fixture, type Phase } from '../data/bench';
+  import { animateOnView, barsHTML, replay } from '../scripts/bars';
+
+  interface Strings {
+    envLabel: Record<Env, string>;
+    phaseLabel: Record<Phase, string>;
+    phaseDesc: Record<Phase, string>;
+    fixtureLabel: Record<Fixture, string>;
+    jpmFastest: string;
+    otherFastest: string;
+  }
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-speed]')) {
+    const s: Strings = JSON.parse(root.dataset.strings ?? '{}');
+    const $ = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    const list = $<HTMLOListElement>('[data-bars]');
+    const repeat = root.querySelector<HTMLInputElement>('input[name="speed-phase"][value="repeat"]')!;
+    const picked = (name: string) => root.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`)!.value;
+    const esc = (x: string) => x.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+    const draw = () => {
+      const env = picked('speed-env') as Env;
+      // Windows has no repeat runs: fall back to cold.
+      repeat.disabled = !bench[env].phases.includes('repeat');
+      if (repeat.disabled && repeat.checked) root.querySelector<HTMLInputElement>('input[name="speed-phase"][value="cold"]')!.checked = true;
+      $('[data-norepeat]').hidden = !repeat.disabled;
+      const phase = picked('speed-phase') as Phase;
+      const fixture = picked('speed-fixture') as Fixture;
+
+      const rows = bench[env].managers.map((m) => ({ name: m.name, version: m.version, value: m.times[phase]![fixture] }));
+      const sorted = [...rows].sort((a, b) => a.value - b.value);
+      list.innerHTML = barsHTML(rows.map((r) => ({ name: r.name, value: r.value, label: formatMs(r.value) })));
+      replay(list);
+
+      const jpm = rows.find((r) => r.name === 'jpm')!;
+      const npm = rows.find((r) => r.name === 'npm')!;
+      const ratio = npm.value / jpm.value;
+      $('[data-verdict]').textContent =
+        sorted[0].name === 'jpm'
+          ? s.jpmFastest.replace('{ratio}', ratio >= 10 ? String(Math.round(ratio)) : ratio.toFixed(1))
+          : s.otherFastest.replace('{name}', sorted[0].name).replace('{value}', formatMs(sorted[0].value)).replace('{jpm}', formatMs(jpm.value));
+
+      $('[data-phase-desc]').textContent = s.phaseDesc[phase];
+      $('[data-chart-sub]').textContent = `${s.envLabel[env]} · ${s.fixtureLabel[fixture]}`;
+      $('[data-table-caption]').textContent = `${s.envLabel[env]}, ${s.phaseLabel[phase]}, ${s.fixtureLabel[fixture]}`;
+      $('[data-table-body]').innerHTML = sorted
+        .map((r) => `<tr><th scope="row">${esc(`${r.name} ${r.version}`.trim())}</th><td>${formatMs(r.value)}</td></tr>`)
+        .join('');
+      $('[data-windows-note]').hidden = env !== 'windows';
+    };
+
+    root.addEventListener('change', draw);
+    animateOnView(list);
+  }
+</script>
+
+<style>
+  @layer components {
+    .speed {
+      display: grid;
+      gap: var(--size-4);
+      container-type: inline-size;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--size-3) var(--size-5);
+    }
+    .phase-desc {
+      color: var(--text-2);
+      font-size: 0.9375rem;
+      min-block-size: 3em;
+    }
+    .chart {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-3);
+      padding: var(--size-4) var(--size-4) var(--size-5);
+      box-shadow: var(--shadow);
+    }
+    .chart-title {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--size-1) var(--size-3);
+      font-weight: var(--font-weight-6);
+      font-size: 0.9375rem;
+      margin-block-end: var(--size-4);
+    }
+    .chart-sub {
+      color: var(--text-2);
+      font-weight: var(--font-weight-4);
+      font-size: 0.875rem;
+    }
+    .verdict {
+      font-weight: var(--font-weight-6);
+    }
+  }
+</style>

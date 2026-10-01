@@ -1,0 +1,303 @@
+---
+// The sticky top bar: mark, section links (a menu on narrow screens), language menu, theme
+// toggle and GitHub. More pages (Docs, Blog) add entries to `links`.
+import Logo from './Logo.astro';
+import { locales, localeHref, repo, useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+  page: string;
+}
+const { locale, page } = Astro.props;
+const t = useTranslations(locale);
+const home = localeHref(locale);
+const links = [
+  { href: `${home}#speed`, label: t('nav.speed') },
+  { href: `${home}#start`, label: t('nav.start') },
+  { href: `${home}#lean`, label: t('nav.lean') },
+  { href: `${home}#storage`, label: t('nav.storage') },
+  { href: `${home}#security`, label: t('nav.security') },
+  { href: `${home}#story`, label: t('nav.story') },
+];
+---
+
+<header class="site-header">
+  <div class="container bar-wrap">
+    <div class="bar">
+      <a class="brand" href={home} aria-label={t('nav.home')}>
+        <Logo size={28} />
+        <span class="wordmark" aria-hidden="true">jpm</span>
+      </a>
+
+      <nav class="links" aria-label={t('nav.sections')}>
+        <ul>
+          {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+        </ul>
+      </nav>
+
+      <div class="tools">
+        <details class="dropdown lang" data-dropdown>
+          <summary class="icon-button lang-button" aria-label={t('nav.language')}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M3 12h18M12 3c2.5 2.6 3.75 5.6 3.75 9S14.5 18.4 12 21c-2.5-2.6-3.75-5.6-3.75-9S9.5 5.6 12 3Z"></path>
+            </svg>
+            <span class="lang-name">{locale.name}</span>
+          </summary>
+          <ul class="dropdown-panel">
+            {
+              locales.map((l) => (
+                <li>
+                  <a href={localeHref(l, page)} hreflang={l.code} lang={l.code} aria-current={l.code === locale.code ? 'true' : undefined}>
+                    {l.name}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </details>
+
+        <button
+          class="icon-button theme-toggle"
+          type="button"
+          data-theme-toggle
+          data-state="system"
+          aria-label={t('theme.system')}
+          data-label-system={t('theme.system')}
+          data-label-light={t('theme.light')}
+          data-label-dark={t('theme.dark')}
+        >
+          <svg class="i-system" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path>
+          </svg>
+          <svg class="i-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+          </svg>
+          <svg class="i-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"></path>
+          </svg>
+        </button>
+
+        <a class="icon-button" href={repo} aria-label={t('nav.github')}>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.49l-.01-1.9c-2.78.62-3.37-1.21-3.37-1.21-.46-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.57 2.34 1.12 2.91.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.3 9.3 0 0 1 12 6.96c.85 0 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.64 1.03 2.76 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9l-.01 2.81c0 .27.18.59.69.49A10.27 10.27 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"></path>
+          </svg>
+        </a>
+
+        <details class="dropdown mobile-nav" data-dropdown>
+          <summary class="icon-button" aria-label={t('nav.menu')}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </summary>
+          <ul class="dropdown-panel">
+            {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+          </ul>
+        </details>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  const KEY = 'jpm-theme';
+  type Choice = 'system' | 'light' | 'dark';
+  const root = document.documentElement;
+  const button = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+
+  function stored(): Choice {
+    try {
+      const v = localStorage.getItem(KEY);
+      return v === 'light' || v === 'dark' ? v : 'system';
+    } catch {
+      return 'system';
+    }
+  }
+
+  function apply(choice: Choice) {
+    if (choice === 'system') delete root.dataset.theme;
+    else root.dataset.theme = choice;
+    if (button) {
+      button.dataset.state = choice;
+      button.setAttribute('aria-label', button.dataset[`label${choice[0].toUpperCase()}${choice.slice(1)}`] ?? '');
+    }
+  }
+
+  // Kept here too, so the toggle still cycles where storage is blocked.
+  let current = stored();
+  apply(current);
+  button?.addEventListener("click", () => {
+    current = ({ system: "light", light: "dark", dark: "system" } as const)[current];
+    try {
+      if (current === "system") localStorage.removeItem(KEY);
+      else localStorage.setItem(KEY, current);
+    } catch {
+      /* Storage blocked: the choice lasts for this page only. */
+    }
+    apply(current);
+  });
+
+  // Dropdowns close on a click outside, on Escape, and after a link in them is followed.
+  const dropdowns = [...document.querySelectorAll<HTMLDetailsElement>('[data-dropdown]')];
+  document.addEventListener('click', (e) => {
+    for (const d of dropdowns) {
+      if (d.open && (!d.contains(e.target as Node) || (e.target as Element).closest('a'))) d.open = false;
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    for (const d of dropdowns) {
+      if (d.open) {
+        d.open = false;
+        d.querySelector('summary')?.focus();
+      }
+    }
+  });
+  for (const d of dropdowns) {
+    d.addEventListener('toggle', () => {
+      if (d.open) for (const o of dropdowns) if (o !== d) o.open = false;
+    });
+  }
+</script>
+
+<style>
+  @layer components {
+    .site-header {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 50;
+      background: var(--header-bg);
+      backdrop-filter: saturate(1.8) blur(10px);
+      border-block-end: 1px solid var(--border);
+    }
+    .bar-wrap {
+      container-type: inline-size;
+    }
+    .bar {
+      display: flex;
+      align-items: center;
+      gap: var(--size-3);
+      block-size: var(--header-h);
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--size-2);
+      color: var(--text-1);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-weight: var(--font-weight-8);
+      font-size: var(--font-size-3);
+      letter-spacing: -0.02em;
+    }
+    .links {
+      margin-inline-start: var(--size-3);
+      & ul {
+        display: flex;
+        gap: var(--size-1);
+        list-style: none;
+        padding: 0;
+      }
+      & a {
+        display: block;
+        padding: var(--size-1) var(--size-2);
+        border-radius: var(--radius-2);
+        color: var(--text-2);
+        font-size: 0.9375rem;
+        font-weight: var(--font-weight-5);
+        text-decoration: none;
+        white-space: nowrap;
+        &:hover {
+          color: var(--text-1);
+          background: var(--surface-3);
+        }
+      }
+    }
+    .tools {
+      display: flex;
+      align-items: center;
+      gap: var(--size-1);
+      margin-inline-start: auto;
+    }
+
+    .dropdown {
+      position: relative;
+      & summary {
+        list-style: none;
+        &::-webkit-details-marker {
+          display: none;
+        }
+      }
+      & .dropdown-panel {
+        position: absolute;
+        inset-inline-end: 0;
+        inset-block-start: calc(100% + var(--size-2));
+        min-inline-size: 12rem;
+        max-block-size: calc(100dvh - var(--header-h) - var(--size-5));
+        overflow-y: auto;
+        list-style: none;
+        padding: var(--size-1);
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-3);
+        box-shadow: var(--shadow);
+      }
+      & .dropdown-panel a {
+        display: block;
+        padding: var(--size-2) var(--size-3);
+        border-radius: var(--radius-2);
+        color: var(--text-1);
+        text-decoration: none;
+        &:hover {
+          background: var(--surface-3);
+        }
+        &[aria-current] {
+          color: var(--link);
+          font-weight: var(--font-weight-7);
+        }
+      }
+    }
+    .lang-button {
+      inline-size: auto;
+      gap: var(--size-1);
+      padding-inline: var(--size-2);
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.875rem;
+      font-weight: var(--font-weight-5);
+    }
+
+    .theme-toggle {
+      & svg {
+        display: none;
+      }
+      &[data-state='system'] .i-system,
+      &[data-state='light'] .i-light,
+      &[data-state='dark'] .i-dark {
+        display: block;
+      }
+    }
+
+    .mobile-nav {
+      display: none;
+    }
+    @container (width < 62rem) {
+      .links {
+        display: none;
+      }
+      .mobile-nav {
+        display: block;
+      }
+    }
+    @container (width < 34rem) {
+      .lang-name {
+        display: none;
+      }
+      .lang-button {
+        inline-size: 2.5rem;
+        padding: 0;
+        justify-content: center;
+      }
+    }
+  }
+</style>

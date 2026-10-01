@@ -1,0 +1,130 @@
+---
+import Logo from './Logo.astro';
+import { docs, link, repo, useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const docLinks = [
+  ['install', t('footer.doc.install')],
+  ['usage', t('footer.doc.usage')],
+  ['migrating', t('footer.doc.migrating')],
+  ['configuration', t('footer.doc.configuration')],
+  ['install-scripts', t('footer.doc.scripts')],
+  ['lockfile', t('footer.doc.lockfile')],
+  ['how-it-works', t('footer.doc.how')],
+  ['benchmarks', t('footer.doc.benchmarks')],
+];
+const projectLinks = [
+  [repo, t('footer.github')],
+  [`${repo}/releases`, t('footer.releases')],
+  [`${repo}/issues`, t('footer.issues')],
+  [`${repo}/blob/main/LICENSE`, t('footer.license')],
+];
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="columns">
+      <div class="about">
+        <p class="brand"><Logo size={24} /> <span>jpm</span></p>
+        <p>{t('hero.tagline')}</p>
+        <p>{t('footer.written')}</p>
+      </div>
+      <nav aria-labelledby="footer-docs">
+        <h2 id="footer-docs">{t('footer.docs')}</h2>
+        <ul>
+          {docLinks.map(([name, label]) => <li><a href={docs(name)}>{label}</a></li>)}
+        </ul>
+      </nav>
+      <nav aria-labelledby="footer-project">
+        <h2 id="footer-project">{t('footer.project')}</h2>
+        <ul>
+          {projectLinks.map(([href, label]) => <li><a href={href}>{label}</a></li>)}
+        </ul>
+      </nav>
+      <div>
+        <h2>{t('footer.credits')}</h2>
+        <ul>
+          <li><a href="https://github.com/unjs/upm">{t('footer.upm')}</a></li>
+          <li>{t('footer.ideas')}</li>
+          <li><a href={`${repo}/blob/main/THIRD_PARTY_NOTICES.md`}>THIRD_PARTY_NOTICES.md</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="bottom">
+      <p>{t('footer.copyright')}</p>
+      <p set:html={t('footer.translations', { link: link(`${repo}/issues`, t('footer.translationsLink')) })} />
+    </div>
+  </div>
+</footer>
+
+<style>
+  @layer components {
+    .site-footer {
+      border-block-start: 1px solid var(--border);
+      background: var(--surface-2);
+      padding-block: var(--size-9) var(--size-7);
+      font-size: 0.875rem;
+      color: var(--text-2);
+      container-type: inline-size;
+    }
+    .columns {
+      display: grid;
+      gap: var(--size-7);
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+    }
+    @container (width >= 60rem) {
+      .columns {
+        grid-template-columns: 2fr 1fr 1fr 1.4fr;
+      }
+    }
+    .about > * + * {
+      margin-block-start: var(--size-2);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--size-2);
+      font-family: var(--font-mono);
+      font-weight: var(--font-weight-8);
+      font-size: var(--font-size-2);
+      color: var(--text-1);
+    }
+    h2 {
+      font-size: var(--font-size-0);
+      text-transform: uppercase;
+      letter-spacing: var(--font-letterspacing-3);
+      color: var(--text-1);
+      margin-block-end: var(--size-3);
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      gap: var(--size-2);
+    }
+    a {
+      color: var(--text-2);
+      text-decoration: none;
+      &:hover {
+        color: var(--link);
+        text-decoration: underline;
+      }
+    }
+    .bottom {
+      margin-block-start: var(--size-8);
+      padding-block-start: var(--size-5);
+      border-block-start: 1px solid var(--border);
+      display: grid;
+      gap: var(--size-2);
+      & :global(a) {
+        color: var(--link);
+        text-decoration: underline;
+      }
+    }
+  }
+</style>

@@ -1,0 +1,80 @@
+---
+import { repo, useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<section id="story" class="section alt" aria-labelledby="story-title">
+  <div class="container story">
+    <p class="eyebrow">{t('story.eyebrow')}</p>
+    <h2 id="story-title" class="section-title">{t('story.title')}</h2>
+    <p>{t('story.p1')}</p>
+    <p>{t('story.p2')}</p>
+    <p>{t('story.p3')}</p>
+    <blockquote>
+      <p>{t('story.quote')}</p>
+      <footer>JT Turner</footer>
+    </blockquote>
+    <p><a class="read-more" href={`${repo}#readme`}>{t('story.readMore')} <span aria-hidden="true">→</span></a></p>
+    <div class="cta">
+      <p>{t('story.cta')}</p>
+      <a class="button primary" href="#top">{t('hero.install')}</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  @layer components {
+    .story {
+      max-inline-size: 46rem;
+      & > p:not(.eyebrow) {
+        font-size: var(--font-size-2);
+        color: var(--text-1);
+        line-height: var(--font-lineheight-4);
+        margin-block-end: var(--size-4);
+      }
+    }
+    blockquote {
+      margin-block: var(--size-6);
+      padding: var(--size-5) var(--size-6);
+      border-inline-start: 4px solid var(--accent);
+      background: var(--surface-raised);
+      border-radius: 0 var(--radius-3) var(--radius-3) 0;
+      & p {
+        font-size: var(--font-size-3);
+        font-weight: var(--font-weight-6);
+        line-height: var(--font-lineheight-2);
+      }
+      & footer {
+        margin-block-start: var(--size-2);
+        color: var(--text-2);
+        &::before {
+          content: '— ';
+        }
+      }
+    }
+    .read-more {
+      font-weight: var(--font-weight-6);
+    }
+    .cta {
+      margin-block-start: var(--size-7);
+      padding: var(--size-6);
+      border-radius: var(--radius-3);
+      background: var(--term-bg);
+      color: var(--term-text);
+      display: grid;
+      gap: var(--size-4);
+      justify-items: start;
+      & p {
+        font-size: var(--font-size-4);
+        font-weight: var(--font-weight-7);
+        line-height: var(--font-lineheight-1);
+        text-wrap: balance;
+      }
+    }
+  }
+</style>

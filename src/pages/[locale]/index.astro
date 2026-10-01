@@ -1,0 +1,13 @@
+---
+// The home page in every language but English, at /zh/, /ja/, …
+import Landing from '../../components/Landing.astro';
+import { locales, localeByPath } from '../../i18n';
+
+export function getStaticPaths() {
+  return locales.filter((l) => l.path).map((l) => ({ params: { locale: l.path } }));
+}
+
+const locale = localeByPath(Astro.params.locale);
+---
+
+<Landing locale={locale} />

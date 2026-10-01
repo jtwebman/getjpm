@@ -1,0 +1,98 @@
+/* Design tokens. Open Props gives the scales (sizes, type, easings, radii) and the raw hues;
+   jpm's own palette below names what each color is for. Only these files are imported, so the
+   built CSS carries only these props. */
+@import 'open-props/sizes';
+@import 'open-props/fonts';
+@import 'open-props/easings';
+@import 'open-props/borders';
+@import 'open-props/teal';
+@import 'open-props/gray';
+
+@layer reset, base, layout, components, utilities;
+
+/* Light, the default. */
+:root {
+  color-scheme: light;
+  --surface-1: #fff;
+  --surface-2: var(--gray-0);
+  --surface-3: var(--gray-1);
+  --surface-raised: #fff;
+  --border: var(--gray-3);
+  --border-strong: var(--gray-5);
+  --text-1: var(--gray-9);
+  --text-2: var(--gray-7);
+  --link: var(--teal-10);
+  --accent: var(--teal-8);
+  --accent-strong: var(--teal-10);
+  --accent-soft: var(--teal-0);
+  --accent-ink: #fff;
+  --bar: var(--gray-6);
+  --bar-jpm: var(--teal-8);
+  --term-bg: var(--gray-10);
+  --term-text: var(--gray-1);
+  --term-dim: var(--gray-5);
+  --term-accent: var(--teal-3);
+  --header-bg: rgb(255 255 255 / 0.85);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.06);
+  --focus: var(--teal-9);
+
+  --page-max: 72rem;
+  --gutter: 16px;
+  --header-h: 3.75rem;
+}
+
+/* Dark, chosen in the theme toggle. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --surface-1: var(--gray-11);
+  --surface-2: var(--gray-10);
+  --surface-3: var(--gray-9);
+  --surface-raised: var(--gray-10);
+  --border: var(--gray-8);
+  --border-strong: var(--gray-7);
+  --text-1: var(--gray-1);
+  --text-2: var(--gray-4);
+  --link: var(--teal-3);
+  --accent: var(--teal-5);
+  --accent-strong: var(--teal-3);
+  --accent-soft: rgb(18 184 134 / 0.12);
+  --accent-ink: var(--gray-12);
+  --bar: var(--gray-6);
+  --bar-jpm: var(--teal-5);
+  --term-bg: var(--gray-12);
+  --term-text: var(--gray-1);
+  --term-dim: var(--gray-6);
+  --term-accent: var(--teal-3);
+  --header-bg: rgb(13 15 18 / 0.85);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.3);
+  --focus: var(--teal-3);
+}
+
+/* Dark, from the system, when no theme was chosen. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --surface-1: var(--gray-11);
+    --surface-2: var(--gray-10);
+    --surface-3: var(--gray-9);
+    --surface-raised: var(--gray-10);
+    --border: var(--gray-8);
+    --border-strong: var(--gray-7);
+    --text-1: var(--gray-1);
+    --text-2: var(--gray-4);
+    --link: var(--teal-3);
+    --accent: var(--teal-5);
+    --accent-strong: var(--teal-3);
+    --accent-soft: rgb(18 184 134 / 0.12);
+    --accent-ink: var(--gray-12);
+    --bar: var(--gray-6);
+    --bar-jpm: var(--teal-5);
+    --term-bg: var(--gray-12);
+    --term-text: var(--gray-1);
+    --term-dim: var(--gray-6);
+    --term-accent: var(--teal-3);
+    --header-bg: rgb(13 15 18 / 0.85);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.3);
+    --focus: var(--teal-3);
+  }
+}

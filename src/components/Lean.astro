@@ -1,0 +1,87 @@
+---
+import { lean, type Bar } from '../data/bench';
+import { barsHTML } from '../scripts/bars';
+import { useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const charts: { id: keyof typeof lean; title: string; bars: Bar[] }[] = [
+  { id: 'binary', title: t('lean.binary'), bars: lean.binary },
+  { id: 'memory', title: t('lean.memory'), bars: lean.memory },
+  { id: 'disk', title: t('lean.disk'), bars: lean.disk },
+  { id: 'cache', title: t('lean.cache'), bars: lean.cache },
+];
+---
+
+<section id="lean" class="section feature" aria-labelledby="lean-title">
+  <div class="container feature-grid">
+    <div class="feature-text">
+      <p class="eyebrow">{t('lean.eyebrow')}</p>
+      <h2 id="lean-title" class="section-title">{t('lean.title')}</h2>
+      <p class="lead">{t('lean.lead')}</p>
+      <p class="cache-note">{t('lean.cacheNote')}</p>
+      <p class="note">{t('lean.note')}</p>
+    </div>
+    <div class="charts">
+      {
+        charts.map((c) => (
+          <figure class="mini" aria-labelledby={`lean-${c.id}`}>
+            <figcaption id={`lean-${c.id}`}>{c.title}</figcaption>
+            <ol class="bars" data-lean-bars aria-hidden="true" set:html={barsHTML(c.bars)} />
+            <div class="sr-only"><table>
+              <caption>{c.title}</caption>
+              <tbody>
+                {[...c.bars]
+                  .sort((a, b) => a.value - b.value)
+                  .map((b) => (
+                    <tr>
+                      <th scope="row">{b.name}</th>
+                      <td>{b.label}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table></div>
+          </figure>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  import { animateOnView } from '../scripts/bars';
+  for (const list of document.querySelectorAll<HTMLElement>('[data-lean-bars]')) animateOnView(list);
+</script>
+
+<style>
+  @layer components {
+    /* Two columns when there is room for both. */
+    .charts {
+      display: grid;
+      gap: var(--size-4);
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    }
+    .mini {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-3);
+      padding: var(--size-4);
+      box-shadow: var(--shadow);
+      & figcaption {
+        font-weight: var(--font-weight-6);
+        font-size: 0.875rem;
+        margin-block-end: var(--size-3);
+        min-block-size: 2.6em;
+      }
+    }
+    .cache-note {
+      border-inline-start: 3px solid var(--accent);
+      padding-inline-start: var(--size-3);
+      color: var(--text-2);
+    }
+  }
+</style>

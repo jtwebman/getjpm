@@ -1,0 +1,294 @@
+---
+import Logo from './Logo.astro';
+import { repo, useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const commands = [
+  { id: 'unix', label: t('hero.unix'), cmd: 'curl -fsSL https://getjpm.sh | sh' },
+  { id: 'windows', label: t('hero.windows'), cmd: 'irm https://getjpm.sh/install.ps1 | iex' },
+];
+const stats = [
+  { value: '~2 MB', label: t('hero.stat.size') },
+  { value: '1.22 s', label: t('hero.stat.speed') },
+  { value: '24 h', label: t('hero.stat.age') },
+];
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="container">
+    <Logo size={72} class="hero-logo" />
+    <h1 id="hero-title">jpm</h1>
+    <p class="tagline">{t('hero.tagline')}</p>
+
+    <div class="install" data-install>
+      <div class="tabs" role="tablist" aria-label={t('hero.install')}>
+        {
+          commands.map((c, i) => (
+            <button
+              type="button"
+              role="tab"
+              id={`tab-${c.id}`}
+              aria-controls={`panel-${c.id}`}
+              aria-selected={i === 0 ? 'true' : 'false'}
+              tabindex={i === 0 ? 0 : -1}
+              data-os={c.id}
+            >
+              {c.label}
+            </button>
+          ))
+        }
+      </div>
+      {
+        commands.map((c, i) => (
+          <div class="panel" role="tabpanel" id={`panel-${c.id}`} aria-labelledby={`tab-${c.id}`} hidden={i !== 0}>
+            <code>
+              <span class="prompt" aria-hidden="true">{c.id === 'unix' ? '$' : '>'}</span> {c.cmd}
+            </code>
+            <button type="button" class="copy" data-copy={c.cmd} data-copied={t('hero.copied')} aria-label={t('hero.copyLabel')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="11" height="11" rx="2" />
+                <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+              </svg>
+              <span class="copy-text">{t('hero.copy')}</span>
+            </button>
+          </div>
+        ))
+      }
+      <p class="sr-only" aria-live="polite" data-copy-status></p>
+    </div>
+
+    <div class="actions">
+      <a class="button primary" href="#start">{t('hero.getStarted')}</a>
+      <a class="button" href={repo}>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.49l-.01-1.9c-2.78.62-3.37-1.21-3.37-1.21-.46-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.57 2.34 1.12 2.91.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.3 9.3 0 0 1 12 6.96c.85 0 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.64 1.03 2.76 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9l-.01 2.81c0 .27.18.59.69.49A10.27 10.27 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"></path>
+        </svg>
+        {t('hero.github')}
+      </a>
+    </div>
+
+    <p class="hook">{t('hero.hook')}</p>
+
+    <ul class="stats">
+      {
+        stats.map((s) => (
+          <li>
+            <strong>{s.value}</strong>
+            <span>{s.label}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-install]')) {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const status = root.querySelector<HTMLElement>('[data-copy-status]');
+
+    const select = (tab: HTMLButtonElement, focus = true) => {
+      for (const t of tabs) {
+        const on = t === tab;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        const panel = document.getElementById(t.getAttribute('aria-controls') ?? '');
+        if (panel) panel.hidden = !on;
+      }
+      if (focus) tab.focus();
+    };
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => select(tab));
+      tab.addEventListener('keydown', (e) => {
+        const n = tabs.length;
+        const to = { ArrowRight: i + 1, ArrowLeft: i - 1 + n, Home: 0, End: n - 1 }[e.key];
+        if (to === undefined) return;
+        e.preventDefault();
+        select(tabs[to % n]);
+      });
+    });
+
+    // Windows visitors see their command first.
+    if (/Windows/i.test(navigator.userAgent)) {
+      const win = tabs.find((t) => t.dataset.os === 'windows');
+      if (win) select(win, false);
+    }
+
+    for (const button of root.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
+      const text = button.querySelector('.copy-text');
+      const label = text?.textContent ?? '';
+      button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(button.dataset.copy ?? '');
+        } catch {
+          return;
+        }
+        const done = button.dataset.copied ?? '';
+        if (text) text.textContent = done;
+        if (status) status.textContent = done;
+        button.classList.add('is-copied');
+        setTimeout(() => {
+          if (text) text.textContent = label;
+          if (status) status.textContent = '';
+          button.classList.remove('is-copied');
+        }, 1600);
+      });
+    }
+  }
+</script>
+
+<style>
+  @layer components {
+    .hero {
+      padding-block: var(--size-fluid-6) var(--size-fluid-5);
+      text-align: center;
+      background:
+        radial-gradient(60rem 26rem at 50% -6rem, var(--accent-soft), transparent 70%),
+        var(--surface-1);
+      container-type: inline-size;
+    }
+    :global(.hero-logo) {
+      margin-inline: auto;
+      margin-block-end: var(--size-3);
+    }
+    h1 {
+      font-family: var(--font-mono);
+      font-size: clamp(3rem, 12cqi, 5rem);
+      font-weight: var(--font-weight-9);
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .tagline {
+      margin-block: var(--size-3) var(--size-7);
+      margin-inline: auto;
+      max-inline-size: 30ch;
+      font-size: clamp(1.25rem, 4.5cqi, 1.75rem);
+      font-weight: var(--font-weight-6);
+      line-height: var(--font-lineheight-1);
+      color: var(--text-1);
+      text-wrap: balance;
+    }
+
+    .install {
+      max-inline-size: 36rem;
+      margin-inline: auto;
+      text-align: start;
+    }
+    .tabs {
+      display: flex;
+      gap: var(--size-1);
+      & button {
+        border: 0;
+        background: none;
+        padding: var(--size-2) var(--size-3);
+        border-radius: var(--radius-2) var(--radius-2) 0 0;
+        font-size: 0.875rem;
+        font-weight: var(--font-weight-6);
+        color: var(--text-2);
+        cursor: pointer;
+        &[aria-selected='true'] {
+          background: var(--term-bg);
+          color: var(--term-text);
+        }
+      }
+    }
+    .panel {
+      display: flex;
+      align-items: center;
+      gap: var(--size-2);
+      padding: var(--size-3) var(--size-3) var(--size-3) var(--size-4);
+      background: var(--term-bg);
+      color: var(--term-text);
+      border-radius: 0 var(--radius-3) var(--radius-3) var(--radius-3);
+      box-shadow: var(--shadow);
+      & code {
+        background: none;
+        padding-inline: 0;
+        color: inherit;
+        flex: 1;
+        min-inline-size: 0;
+        overflow-x: auto;
+        white-space: nowrap;
+        font-size: 0.9375rem;
+        padding-block: var(--size-1);
+        scrollbar-width: thin;
+      }
+      & .prompt {
+        color: var(--term-accent);
+        user-select: none;
+      }
+    }
+    .copy {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--size-1);
+      flex-shrink: 0;
+      border: 1px solid var(--term-dim);
+      background: transparent;
+      color: var(--term-text);
+      border-radius: var(--radius-2);
+      padding: var(--size-1) var(--size-2);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      &:hover,
+      &.is-copied {
+        border-color: var(--term-accent);
+        color: var(--term-accent);
+      }
+      & svg {
+        inline-size: 1rem;
+        block-size: 1rem;
+      }
+    }
+    @container (width < 30rem) {
+      .copy-text {
+        display: none;
+      }
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: var(--size-3);
+      margin-block-start: var(--size-6);
+    }
+    .hook {
+      margin-block-start: var(--size-6);
+      margin-inline: auto;
+      max-inline-size: 44rem;
+      color: var(--text-2);
+      font-size: var(--font-size-2);
+    }
+    .stats {
+      list-style: none;
+      padding: 0;
+      margin-block-start: var(--size-8);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+      gap: var(--size-4);
+      max-inline-size: 52rem;
+      margin-inline: auto;
+      & li {
+        display: grid;
+        gap: var(--size-1);
+      }
+      & strong {
+        font-size: var(--font-size-6);
+        font-weight: var(--font-weight-8);
+        letter-spacing: -0.02em;
+        color: var(--accent-strong);
+        font-variant-numeric: tabular-nums;
+      }
+      & span {
+        color: var(--text-2);
+        font-size: 0.875rem;
+      }
+    }
+  }
+</style>

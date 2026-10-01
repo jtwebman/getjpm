@@ -1,0 +1,107 @@
+/* Horizontal bar charts (speed and lean). Global, not scoped: the speed chart's script rebuilds
+   its rows. A bar grows by sliding its fill in from the left inside a clip box of its final
+   width, so only `transform` and `opacity` animate and nothing shifts the layout. */
+@layer components {
+  .bars {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr);
+    align-items: center;
+    gap: var(--size-2);
+    min-block-size: 22px;
+  }
+  .bar-name {
+    font-size: 0.875rem;
+    color: var(--text-2);
+    text-align: end;
+    white-space: nowrap;
+  }
+  .bar-lane {
+    display: block;
+    padding-inline-end: 4.75rem;
+  }
+  .bar-track {
+    position: relative;
+    display: block;
+    block-size: 20px;
+  }
+  .bar-clip {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: max(var(--w), 3px);
+    overflow: hidden;
+  }
+  .bar-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--bar);
+    border-radius: 0 4px 4px 0;
+  }
+  .bar-value {
+    position: absolute;
+    inset-inline-start: calc(max(var(--w), 3px) + 6px);
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-2);
+    white-space: nowrap;
+  }
+  .bar-row[data-jpm] {
+    & .bar-name,
+    & .bar-value {
+      color: var(--text-1);
+      font-weight: var(--font-weight-7);
+    }
+    & .bar-fill {
+      background: var(--bar-jpm);
+    }
+  }
+
+  /* Set by script when motion is allowed: bars wait at zero until scrolled into view, then grow
+     at one speed together, so the shortest lands first and the longest last. */
+  .bars.js-anim {
+    & .bar-fill {
+      transform: translateX(-101%);
+    }
+    & .bar-value {
+      opacity: 0;
+    }
+    &.is-in .bar-fill {
+      animation: bar-grow var(--d, 600ms) var(--ease-out-3) forwards;
+    }
+    &.is-in .bar-value {
+      animation: bar-fade 250ms var(--ease-2) var(--d, 600ms) forwards;
+    }
+  }
+  @keyframes bar-grow {
+    to {
+      transform: translateX(0);
+    }
+  }
+  @keyframes bar-fade {
+    to {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bars.js-anim {
+      & .bar-fill,
+      &.is-in .bar-fill {
+        transform: none;
+        animation: none;
+      }
+      & .bar-value,
+      &.is-in .bar-value {
+        opacity: 1;
+        animation: none;
+      }
+    }
+  }
+}
