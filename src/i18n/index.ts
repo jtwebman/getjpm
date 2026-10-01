@@ -13,19 +13,21 @@ export interface Locale {
   path: string;
   /** The language's own name, for the language menu. */
   name: string;
+  /** Open Graph's locale form, language_TERRITORY. */
+  og: string;
 }
 
 export const locales: Locale[] = [
-  { code: 'en', path: '', name: 'English' },
-  { code: 'zh-CN', path: 'zh', name: '简体中文' },
-  { code: 'ja', path: 'ja', name: '日本語' },
-  { code: 'ko', path: 'ko', name: '한국어' },
-  { code: 'es', path: 'es', name: 'Español' },
-  { code: 'pt-BR', path: 'pt', name: 'Português (Brasil)' },
-  { code: 'fr', path: 'fr', name: 'Français' },
-  { code: 'de', path: 'de', name: 'Deutsch' },
-  { code: 'ru', path: 'ru', name: 'Русский' },
-  { code: 'uk', path: 'uk', name: 'Українська' },
+  { code: 'en', path: '', name: 'English', og: 'en_US' },
+  { code: 'zh-CN', path: 'zh', name: '简体中文', og: 'zh_CN' },
+  { code: 'ja', path: 'ja', name: '日本語', og: 'ja_JP' },
+  { code: 'ko', path: 'ko', name: '한국어', og: 'ko_KR' },
+  { code: 'es', path: 'es', name: 'Español', og: 'es_ES' },
+  { code: 'pt-BR', path: 'pt', name: 'Português (Brasil)', og: 'pt_BR' },
+  { code: 'fr', path: 'fr', name: 'Français', og: 'fr_FR' },
+  { code: 'de', path: 'de', name: 'Deutsch', og: 'de_DE' },
+  { code: 'ru', path: 'ru', name: 'Русский', og: 'ru_RU' },
+  { code: 'uk', path: 'uk', name: 'Українська', og: 'uk_UA' },
 ];
 
 export const defaultLocale = locales[0];

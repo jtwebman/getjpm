@@ -21,7 +21,25 @@ const pageTitle = title ?? t('meta.title');
 const pageDescription = description ?? t('meta.description');
 const canonical = new URL(localeHref(locale, page), site).href;
 const ogImage = new URL('/og.png', site).href;
-const ogLocale = locale.code.replace('-', '_');
+const repo = 'https://github.com/jtwebman/jpm';
+// What search engines show about jpm: free, MIT-licensed developer software, with its source and
+// where to get it. A data block, never run, so the page's script policy does not apply to it.
+const structured = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'jpm',
+  description: pageDescription,
+  url: site.href,
+  image: ogImage,
+  applicationCategory: 'DeveloperApplication',
+  operatingSystem: 'Linux, macOS, Windows',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  license: 'https://opensource.org/licenses/MIT',
+  downloadUrl: `${repo}/releases/latest`,
+  sameAs: [repo],
+  author: { '@type': 'Person', name: 'JT Turner', url: 'https://github.com/jtwebman' },
+  inLanguage: locale.code,
+};
 ---
 
 <!doctype html>
@@ -35,6 +53,10 @@ const ogLocale = locale.code.replace('-', '_');
     {locales.map((l) => <link rel="alternate" hreflang={l.code} href={new URL(localeHref(l, page), site).href} />)}
     <link rel="alternate" hreflang="x-default" href={new URL(localeHref(locales[0], page), site).href} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <meta name="author" content="JT Turner" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0d0f12" media="(prefers-color-scheme: dark)" />
     <meta property="og:type" content="website" />
@@ -46,11 +68,14 @@ const ogLocale = locale.code.replace('-', '_');
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="jpm: fast, small, secure by default" />
-    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:locale" content={locale.og} />
+    {locales.filter((l) => l !== locale).map((l) => <meta property="og:locale:alternate" content={l.og} />)}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDescription} />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content="jpm: fast, small, secure by default" />
+    <script type="application/ld+json" set:html={JSON.stringify(structured)} />
     <!-- The chosen theme, set before the first paint so a dark page never flashes light. -->
     <script is:inline>
       try {
