@@ -9,7 +9,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "test": "node --test \"test/*.test.mjs\""
+    "test": "node --test \"test/*.test.mjs\"",
+    "deploy": "astro build && npx --yes wrangler@4.145.0 pages deploy dist --project-name getjpm --branch main && node scripts/indexnow.mjs",
+    "indexnow": "node scripts/indexnow.mjs"
   },
   "dependencies": {
     "astro": "7.3.5",

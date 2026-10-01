@@ -112,28 +112,26 @@ header's `links` list takes more entries (Docs, Blog). When the site grows a doc
 
 ## Deploying on Cloudflare Pages
 
-The site is a Cloudflare Pages project built from this repository. One-time setup, in the
-Cloudflare dashboard:
+The site is a Cloudflare Pages project, `getjpm`, deployed from this repository with wrangler
+(a Direct Upload project). The function in `functions/` at the repository root is bundled and
+deployed with the site; it needs no settings or bindings. To deploy:
 
-1. **Add the domain.** Add `getjpm.sh` to Cloudflare (Websites, Add a site) and point the
-   registrar's nameservers at the two Cloudflare gives.
-2. **Create the Pages project.** Workers & Pages, Create, Pages, Connect to Git: pick the GitHub
-   repository `jtwebman/getjpm`, production branch `main`, and these build settings:
+```sh
+npx wrangler login          # once, in a browser
+npm run deploy              # build, deploy to Cloudflare Pages, then notify IndexNow
+```
 
-   | Setting | Value |
-   | --- | --- |
-   | Framework preset | Astro |
-   | Build command | `npm run build` |
-   | Build output directory | `dist` |
-   | Root directory | (empty: the repository root) |
+`npm run deploy` runs a pinned wrangler through `npx` rather than keeping it (and workerd, about
+60 MB) in `node_modules`. After the deploy it tells IndexNow, which Bing, Yandex, Naver, Seznam
+and others share, that the sitemap's pages changed (`scripts/indexnow.mjs`; `npm run indexnow`
+runs it alone). The IndexNow key is the 32-hex-digit `.txt` file in `public/`: the search
+engines fetch it from the site to check a ping is ours.
 
-   Node comes from `.nvmrc` (24). The function in `functions/` at the repository root is found
-   and deployed with the site; it needs no settings or bindings.
-3. **Add the custom domain.** In the project, Custom domains, Set up a custom domain:
-   `getjpm.sh`. Cloudflare adds the DNS record and the certificate.
+The domain: `getjpm.sh` is on Cloudflare, and the Pages project's Custom domains has
+`getjpm.sh`, which made the DNS record and the certificate. The project was created with
+`npx wrangler pages project create getjpm --production-branch main`.
 
-Every push to `main` then deploys, and every pull request gets a preview URL. To check a
-deploy:
+To check a deploy:
 
 ```sh
 curl -fsSL https://getjpm.sh | head -3                  # #!/bin/sh …
