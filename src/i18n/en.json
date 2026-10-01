@@ -119,7 +119,7 @@
   "switch.more": "Older formats, out-of-date lockfiles and the rest: {link}.",
   "story.eyebrow": "The story",
   "story.title": "Written by Claude Code. Checked by everyone else's tests.",
-  "story.p1": "It started with an episode of the Syntax podcast that held up upm as faster and smaller than the rest. Small, because it runs on Node.js. So: what if it were ported to Rust and made small for real? And what would it take to turn an AI's one-shot into something you'd trust in CI?",
+  "story.p1": "It started with <a href=\"https://www.youtube.com/watch?v=Z412bnUNiDI&amp;t=71s\">an episode of the Syntax podcast</a> that held up upm as faster and smaller than the rest. Small, because it runs on Node.js. So: what if it were ported to Rust and made small for real? And what would it take to turn an AI's one-shot into something you'd trust in CI?",
   "story.p2": "Claude Code, running Claude Opus 5.5, wrote every line, its own TLS and crypto included. JT Turner, an engineer of 27 years, made the calls. When Claude pushed back on writing our own TLS, the condition was: test it like we didn't trust it. So every \"it works\" is checked against someone else's tests: Wycheproof, the RFCs, and the suites of npm, pnpm, yarn and bun.",
   "story.p3": "The numbers decide. An HTTP/2 client was built, benchmarked on GitHub's runners and a desktop, found slower and hungrier for CPU, and deleted.",
   "story.quote": "Is jpm perfect? No. Perfect doesn't exist. There's good enough, there's great, and there's tested enough to know which one you have.",

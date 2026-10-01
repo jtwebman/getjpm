@@ -12,7 +12,7 @@ const t = useTranslations(locale);
   <div class="container story">
     <p class="eyebrow">{t('story.eyebrow')}</p>
     <h2 id="story-title" class="section-title">{t('story.title')}</h2>
-    <p>{t('story.p1')}</p>
+    <p set:html={t('story.p1')} />
     <p>{t('story.p2')}</p>
     <p>{t('story.p3')}</p>
     <blockquote>

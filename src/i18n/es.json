@@ -119,7 +119,7 @@
   "switch.more": "Formatos antiguos, lockfiles desactualizados y lo demás: {link}.",
   "story.eyebrow": "La historia",
   "story.title": "Escrito por Claude Code. Verificado con las pruebas de todos los demás.",
-  "story.p1": "Todo empezó con un episodio del podcast Syntax que presentaba upm como más rápido y más pequeño que el resto. Pequeño, porque se ejecuta sobre Node.js. Entonces: ¿y si se portara a Rust y fuera pequeño de verdad? ¿Y qué haría falta para convertir el primer intento de una IA en algo en lo que confiarías en CI?",
+  "story.p1": "Todo empezó con <a href=\"https://www.youtube.com/watch?v=Z412bnUNiDI&amp;t=71s\">un episodio del podcast Syntax</a> que presentaba upm como más rápido y más pequeño que el resto. Pequeño, porque se ejecuta sobre Node.js. Entonces: ¿y si se portara a Rust y fuera pequeño de verdad? ¿Y qué haría falta para convertir el primer intento de una IA en algo en lo que confiarías en CI?",
   "story.p2": "Claude Code, con Claude Opus 5.5, escribió cada línea, incluidos su propio TLS y su criptografía. JT Turner, ingeniero con 27 años de experiencia, tomó las decisiones. Cuando Claude se resistió a escribir nuestro propio TLS, la condición fue: probarlo como si no confiáramos en él. Así que cada \"funciona\" se verifica con las pruebas de otros: Wycheproof, los RFC y las suites de npm, pnpm, yarn y bun.",
   "story.p3": "Los números deciden. Se construyó un cliente HTTP/2, se midió en los runners de GitHub y en un equipo de escritorio, resultó más lento y más voraz de CPU, y se eliminó.",
   "story.quote": "¿Es jpm perfecto? No. Lo perfecto no existe. Existe lo suficientemente bueno, existe lo excelente, y existe lo bastante probado como para saber cuál de los dos tienes.",
