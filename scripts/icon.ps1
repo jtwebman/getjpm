@@ -8,7 +8,7 @@ $n = 180; $s = $n / 32
 $bmp = New-Object System.Drawing.Bitmap $n, $n
 $g = [System.Drawing.Graphics]::FromImage($bmp)
 $g.SmoothingMode = 'AntiAlias'
-$g.Clear([System.Drawing.ColorTranslator]::FromHtml('#099268'))
+$g.Clear([System.Drawing.ColorTranslator]::FromHtml('#b8682f'))
 $white = [System.Drawing.Color]::White
 $g.FillEllipse((New-Object System.Drawing.SolidBrush $white), (18.5 - 2.25) * $s, (8.75 - 2.25) * $s, 4.5 * $s, 4.5 * $s)
 $pen = New-Object System.Drawing.Pen $white, (3.5 * $s)

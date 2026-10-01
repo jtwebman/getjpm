@@ -86,7 +86,7 @@
     outline-offset: 2px;
   }
   ::selection {
-    background: var(--teal-2);
+    background: var(--clay-2);
     color: var(--gray-12);
   }
 }
