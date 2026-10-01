@@ -96,7 +96,7 @@
   "security.integrity.title": "Checked before it's visible",
   "security.integrity.body": "Every package is checked against its lockfile integrity before any of its files are visible to your project.",
   "security.creds.title": "No secrets in the lockfile",
-  "security.creds.body": "Credentials never land in <code>jpm.lock</code>: tokens stay in your <code>.npmrc</code>, and a git url carrying a password is refused.",
+  "security.creds.body": "Credentials never land in <code>jpm.lock</code>: tokens stay in your <code>.npmrc</code>, and a git URL carrying a password is refused.",
   "security.npmrc.title": "A cloned repo can't lower the bar",
   "security.npmrc.body": "A project's own <code>.npmrc</code> can't turn off TLS checks, swap the CA or proxy, or loosen the release age. jpm ignores those there and names them in a warning.",
   "security.tls.title": "Its own TLS, no OpenSSL",
