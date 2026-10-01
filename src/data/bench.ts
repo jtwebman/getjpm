@@ -1,10 +1,10 @@
-// Benchmark medians from jpm's docs/benchmarks.md (2026-09-30), in milliseconds:
+// Benchmark medians from jpm's docs/benchmarks.md (2026-09-30, macOS 2026-10-01), in milliseconds:
 // https://github.com/jtwebman/jpm/blob/main/docs/benchmarks.md
 // Values are copied as the tables print them (1.22 s is 1220 ms); nothing is rounded further.
 
 export type Phase = 'cold' | 'warm' | 'ci' | 'repeat';
 export type Fixture = 'nitro' | 'nuxt' | 'next';
-export type Env = 'github' | 'windows';
+export type Env = 'github' | 'macos' | 'windows';
 
 /** Each manager's wall time: [phase][fixture]. */
 type Times = Partial<Record<Phase, Record<Fixture, number>>>;
@@ -37,6 +37,20 @@ export const bench: Record<Env, Environment> = {
       { name: 'upm', version: '1.3.1', times: { cold: t(1120, 3520, 2470), warm: t(99, 447, 209), ci: t(530, 2060, 1840), repeat: t(40, 44, 38) } },
       { name: 'yarn', version: '4.18.1', times: { cold: t(1750, 9630, 8360), warm: t(690, 3130, 3540), ci: t(1280, 5580, 6500), repeat: t(385, 1020, 771) } },
       { name: 'npm', version: '12.1.0', times: { cold: t(2070, 18540, 10550), warm: t(930, 4690, 6530), ci: t(1220, 6620, 7480), repeat: t(326, 794, 334) } },
+    ],
+  },
+  // macOS 26.7 on an Apple M4 Max (14 cores), on a home connection, medians of 5 runs, 2026-10-01.
+  macos: {
+    phases: ['cold', 'warm', 'ci', 'repeat'],
+    managers: [
+      { name: 'jpm', version: '', times: { cold: t(636, 3020, 2640), warm: t(21, 594, 189), ci: t(396, 2810, 2310), repeat: t(13, 12, 16) } },
+      { name: 'bun', version: '1.4.2', times: { cold: t(500, 3020, 3040), warm: t(38, 472, 181), ci: t(448, 2920, 2530), repeat: t(22, 117, 21) } },
+      { name: 'aube', version: '2.6.1', times: { cold: t(1180, 8370, 4880), warm: t(46, 335, 1950), ci: t(769, 6610, 4160), repeat: t(20, 186, 16) } },
+      { name: 'pnpm', version: '12.8.1', times: { cold: t(818, 5920, 5480), warm: t(105, 900, 453), ci: t(898, 6220, 5530), repeat: t(22, 22, 31) } },
+      { name: 'deno', version: '2.9.6', times: { cold: t(676, 8880, 5010), warm: t(45, 697, 182), ci: t(475, 4350, 4090), repeat: t(17, 26, 18) } },
+      { name: 'upm', version: '1.3.1', times: { cold: t(1170, 6430, 5130), warm: t(601, 3040, 2130), ci: t(1010, 5770, 4970), repeat: t(45, 60, 50) } },
+      { name: 'yarn', version: '4.18.1', times: { cold: t(1140, 6180, 6800), warm: t(470, 2710, 3000), ci: t(872, 4180, 5650), repeat: t(237, 462, 375) } },
+      { name: 'npm', version: '12.1.0', times: { cold: t(1020, 9230, 5060), warm: t(598, 3150, 3210), ci: t(719, 3650, 3360), repeat: t(307, 514, 323) } },
     ],
   },
   // Windows 11 on an i9-12900K, Defender real-time protection on, medians of 3 runs.

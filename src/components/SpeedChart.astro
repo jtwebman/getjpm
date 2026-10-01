@@ -15,11 +15,11 @@ const env: Env = 'github';
 const phase: Phase = 'cold';
 const fixture: Fixture = 'nuxt';
 
-const envs: Env[] = ['github', 'windows'];
+const envs: Env[] = ['github', 'macos', 'windows'];
 const phases: Phase[] = ['cold', 'warm', 'ci', 'repeat'];
 const fixtureNames = Object.keys(fixtures) as Fixture[];
 
-const envLabel = { github: t('speed.env.github'), windows: t('speed.env.windows') };
+const envLabel = { github: t('speed.env.github'), macos: t('speed.env.macos'), windows: t('speed.env.windows') };
 const phaseLabel = Object.fromEntries(phases.map((p) => [p, t(`speed.phase.${p}`)]));
 const phaseDesc = Object.fromEntries(phases.map((p) => [p, t(`speed.phaseDesc.${p}`)]));
 const fixtureLabel = Object.fromEntries(fixtureNames.map((f) => [f, `${f} · ${t('speed.packages', { n: fixtures[f] })}`]));
@@ -32,6 +32,7 @@ const strings = {
   fixtureLabel,
   jpmFastest: t('speed.jpmFastest'),
   otherFastest: t('speed.otherFastest'),
+  tie: t('speed.tie'),
 };
 
 function view(e: Env, p: Phase, f: Fixture) {
@@ -40,8 +41,11 @@ function view(e: Env, p: Phase, f: Fixture) {
   const jpm = rows.find((r) => r.name === 'jpm')!;
   const npm = rows.find((r) => r.name === 'npm')!;
   const ratio = npm.value / jpm.value;
+  const tied = sorted.find((r) => r.name !== 'jpm' && r.value === sorted[0].value);
   const caption =
-    sorted[0].name === 'jpm'
+    jpm.value === sorted[0].value && tied
+      ? strings.tie.replace('{name}', tied.name).replace('{value}', formatMs(jpm.value))
+      : sorted[0].name === 'jpm'
       ? strings.jpmFastest.replace('{ratio}', ratio >= 10 ? String(Math.round(ratio)) : ratio.toFixed(1))
       : strings.otherFastest.replace('{name}', sorted[0].name).replace('{value}', formatMs(sorted[0].value)).replace('{jpm}', formatMs(jpm.value));
   return { rows, sorted, caption };
@@ -136,6 +140,7 @@ const bars = barsHTML(first.rows.map((r) => ({ name: r.name, value: r.value, lab
     fixtureLabel: Record<Fixture, string>;
     jpmFastest: string;
     otherFastest: string;
+    tie: string;
   }
 
   for (const root of document.querySelectorAll<HTMLElement>('[data-speed]')) {
@@ -163,8 +168,11 @@ const bars = barsHTML(first.rows.map((r) => ({ name: r.name, value: r.value, lab
       const jpm = rows.find((r) => r.name === 'jpm')!;
       const npm = rows.find((r) => r.name === 'npm')!;
       const ratio = npm.value / jpm.value;
+      const tied = sorted.find((r) => r.name !== 'jpm' && r.value === sorted[0].value);
       $('[data-verdict]').textContent =
-        sorted[0].name === 'jpm'
+        jpm.value === sorted[0].value && tied
+          ? s.tie.replace('{name}', tied.name).replace('{value}', formatMs(jpm.value))
+          : sorted[0].name === 'jpm'
           ? s.jpmFastest.replace('{ratio}', ratio >= 10 ? String(Math.round(ratio)) : ratio.toFixed(1))
           : s.otherFastest.replace('{name}', sorted[0].name).replace('{value}', formatMs(sorted[0].value)).replace('{jpm}', formatMs(jpm.value));
 
