@@ -1,7 +1,7 @@
 // The Pages Function's request handling, with fetch and the static site mocked.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { handle, installerFor, SCRIPTS_BASE } from '../functions/_middleware.js';
+import { counter, handle, installerFor, SCRIPTS_BASE } from '../functions/_middleware.js';
 
 const SH = '#!/bin/sh\necho install jpm\n';
 const PS1 = '# Install jpm: irm https://getjpm.sh/install.ps1 | iex\n';
@@ -117,4 +117,52 @@ test('installerFor', () => {
   assert.equal(r({ 'user-agent': 'Mozilla/5.0 WindowsPowerShell/5.1' }), 'install.ps1');
   assert.equal(r(BROWSER), null);
   assert.equal(r({ 'user-agent': 'Go-http-client/1.1' }), 'install.sh');
+});
+
+// Counting: one point per script handed out, holding only the script and the path.
+function tally() {
+  const points = [];
+  return { points, count: (script, path) => points.push([script, path]) };
+}
+
+test('counts each script handed out, by script and path only', async () => {
+  const { points, count } = tally();
+  const curl = { 'user-agent': 'curl/8.7.1', accept: '*/*' };
+  const ps = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Microsoft Windows 10.0.26100; en-US) PowerShell/7.5.0' };
+  await handle(req('/', curl), next, upstream().fetchImpl, count);
+  await handle(req('/install.sh', curl), next, upstream().fetchImpl, count);
+  await handle(req('/install.ps1', ps), next, upstream().fetchImpl, count);
+  await handle(req('/', ps), next, upstream().fetchImpl, count);
+  assert.deepEqual(points, [
+    ['install.sh', '/'],
+    ['install.sh', '/install.sh'],
+    ['install.ps1', '/install.ps1'],
+    ['install.ps1', '/'],
+  ]);
+});
+
+test('does not count the page, a HEAD, or a script it could not fetch', async () => {
+  const { points, count } = tally();
+  await handle(req('/', BROWSER), next, upstream().fetchImpl, count);
+  await handle(req('/install.sh', {}, 'HEAD'), next, upstream().fetchImpl, count);
+  await handle(req('/install.sh'), next, upstream(404).fetchImpl, count);
+  await handle(req('/install.sh'), next, upstream('throw').fetchImpl, count);
+  await handle(req('/ja/', BROWSER), next, upstream().fetchImpl, count);
+  assert.deepEqual(points, []);
+});
+
+test('a counter that throws never fails the install', async () => {
+  const res = await handle(req('/install.sh'), next, upstream().fetchImpl, () => {
+    throw new Error('analytics down');
+  });
+  assert.equal(res.status, 200);
+  assert.equal(await res.text(), SH);
+});
+
+test('the Analytics Engine point holds the script and path and nothing else', () => {
+  const written = [];
+  counter({ INSTALLS: { writeDataPoint: (p) => written.push(p) } })('install.sh', '/');
+  assert.deepEqual(written, [{ blobs: ['install.sh', '/'], doubles: [1], indexes: ['install.sh'] }]);
+  // No binding (local runs, previews): nothing to write, and no error.
+  assert.doesNotThrow(() => counter({})('install.sh', '/'));
 });

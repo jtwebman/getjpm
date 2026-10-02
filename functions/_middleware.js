@@ -75,15 +75,27 @@ export async function serveScript(name, request, fetchImpl = fetch) {
  * @param {() => Promise<Response>} next
  * @param {typeof fetch} [fetchImpl]
  */
-export async function handle(request, next, fetchImpl = fetch) {
+export async function handle(request, next, fetchImpl = fetch, count = () => {}) {
   const { pathname } = new URL(request.url);
   const isRead = request.method === 'GET' || request.method === 'HEAD';
+  // A script handed out, counted by which one and the path asked for: nothing about who asked.
+  const served = async (script) => {
+    const response = await serveScript(script, request, fetchImpl);
+    if (request.method === 'GET' && response.status === 200) {
+      try {
+        count(script, pathname);
+      } catch {
+        // A count is never worth a failed install.
+      }
+    }
+    return response;
+  };
 
-  if (isRead && pathname in SCRIPT_PATHS) return serveScript(SCRIPT_PATHS[pathname], request, fetchImpl);
+  if (isRead && pathname in SCRIPT_PATHS) return served(SCRIPT_PATHS[pathname]);
 
   if (isRead && pathname === '/') {
     const script = installerFor(request);
-    if (script) return serveScript(script, request, fetchImpl);
+    if (script) return served(script);
     // The page varies by these headers too, so a shared cache never hands it to curl.
     const page = await next();
     const response = new Response(page.body, page);
@@ -94,5 +106,15 @@ export async function handle(request, next, fetchImpl = fetch) {
   return next();
 }
 
+/**
+ * One data point per install script handed out, in Workers Analytics Engine (wrangler.toml's
+ * INSTALLS): the script and the path, nothing else. No address, user agent, cookie or other
+ * identifier is read or stored. Writing does not wait on anything and cannot fail the response.
+ * @param {{ INSTALLS?: { writeDataPoint(point: object): void } }} env
+ */
+export function counter(env) {
+  return (script, path) => env.INSTALLS?.writeDataPoint({ blobs: [script, path], doubles: [1], indexes: [script] });
+}
+
 /** @type {PagesFunction} */
-export const onRequest = (context) => handle(context.request, () => context.next());
+export const onRequest = (context) => handle(context.request, () => context.next(), fetch, counter(context.env));

@@ -1,0 +1,10 @@
+# The Cloudflare Pages project getjpm.sh deploys to (`npm run deploy`).
+name = "getjpm"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-01"
+
+# Install-script counts (functions/_middleware.js): one point per install.sh or install.ps1 handed
+# out, holding only which script and the path asked for. `npm run installs` reads them.
+[[analytics_engine_datasets]]
+binding = "INSTALLS"
+dataset = "getjpm_installs"

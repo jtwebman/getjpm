@@ -139,6 +139,19 @@ curl -fsSI https://getjpm.sh/install.ps1                # content-type: text/pla
 curl -fsS -H 'Accept: text/html' -A 'Mozilla/5.0' https://getjpm.sh | head -c 100   # the page
 ```
 
+## What the site counts
+
+getjpm.sh counts the install scripts it hands out, and nothing else. Each `install.sh` or
+`install.ps1` the Pages Function serves writes one data point to Workers Analytics Engine
+(`wrangler.toml`'s `INSTALLS`, dataset `getjpm_installs`) holding two things: which script, and
+the path asked for (`/`, `/install.sh` or `/install.ps1`). No IP address, user agent, cookie or
+other identifier is read or stored, the page itself is not counted, and a failed count never fails
+an install. A fetch is not an install, and nothing here tells one person from another.
+
+The release files' download counts on GitHub are the other number: the installers fetch the
+binary from there. `npm run installs` prints both (the script counts need `CLOUDFLARE_ACCOUNT_ID`
+and a `CLOUDFLARE_API_TOKEN` with "Account Analytics: Read"; GitHub's need nothing).
+
 ## License
 
 MIT, Copyright (c) 2026 JT Turner. See [LICENSE](LICENSE).
