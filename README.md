@@ -142,35 +142,34 @@ curl -fsS -H 'Accept: text/html' -A 'Mozilla/5.0' https://getjpm.sh | head -c 10
 
 ## What the site counts
 
-getjpm.sh counts the install scripts it hands out, and nothing else. Each `install.sh` or
-`install.ps1` the Pages Function serves writes one data point to Workers Analytics Engine
-(`wrangler.toml`'s `INSTALLS`, dataset `getjpm_installs`) holding two things: which script, and
-the path asked for (`/`, `/install.sh` or `/install.ps1`). No IP address, user agent, cookie or
-other identifier is read or stored, the page itself is not counted, and a failed count never fails
-an install. A fetch is not an install, and nothing here tells one person from another.
+getjpm.sh counts the install scripts it hands out, and nothing else. For each `install.sh` or
+`install.ps1` the Pages Function serves, it adds one to a row of a D1 table (`wrangler.toml`'s `DB`,
+database `getjpm`, table `installs` from `migrations/0001_installs.sql`) kept per UTC day, script,
+and path asked for (`/`, `/install.sh` or `/install.ps1`). A row holds those three and a number.
+No IP address, user agent, cookie or other identifier is read or stored, the page itself is not
+counted, and the write runs after the response (`waitUntil`) and is dropped if it fails, so a
+count never slows or fails an install. A fetch is not an install, and nothing here tells one
+person from another.
 
 The release files' download counts on GitHub are the other number: the installers fetch the
-binary from there. `npm run installs` prints both (the script counts need `CLOUDFLARE_ACCOUNT_ID`
-and a `CLOUDFLARE_API_TOKEN` with "Account Analytics: Read"; GitHub's need nothing).
+binary from there. `npm run installs` prints both: the script counts through `wrangler d1 execute`
+with your own wrangler login, GitHub's with no login at all.
 
-The home page shows both, in public, near the bottom: the install scripts handed out in the last
-30 days, and the downloads of the jpm binary (release files named `jpm-*`) from GitHub, with the
-paragraph above in plain words next to them. The page fetches them in the browser from
+The home page shows both, in public, near the bottom: the install scripts handed out since
+getjpm.sh launched, and the downloads of the jpm binary (release files named `jpm-*`) from GitHub,
+with the paragraph above in plain words next to them. The page fetches them in the browser from
 `GET /api/installs` (`functions/api/installs.js`), which answers
-`{ "scripts30d": n, "binaryDownloads": n, "updated": "<ISO time>" }`:
+`{ "scripts": n, "scripts30d": n, "binaryDownloads": n, "updated": "<ISO time>" }`:
 
-- `scripts30d` is `SUM(_sample_interval)` over `getjpm_installs` for the last 30 days, all
-  scripts together, from the Analytics Engine SQL API. It needs `wrangler.toml`'s `CF_ACCOUNT_ID`
-  and the secret `CF_ANALYTICS_TOKEN` ("Account Analytics: Read" only), set with
-  `npx wrangler pages secret put CF_ANALYTICS_TOKEN --project-name getjpm`.
+- `scripts` and `scripts30d` are the table's total, all told and over the last 30 days, read
+  through the same D1 binding: the site holds no API token or other credential for them.
 - `binaryDownloads` is the sum of `download_count` over every release's `jpm-*` files, from
   GitHub's API without a token. Zero means there is no release yet, and the page says so.
-- Either is `null` when its source is missing or fails, and the page shows a dash for it (and
-  only the explanation when both are). No upstream error text or header is passed on, and the
-  token is never logged or returned.
+- Any of them is `null` when its source is missing or fails, and the page shows a dash for it
+  (and only the explanation when the counts all are). No upstream error text or header is passed on.
 - The answer is cached at the edge with the Cache API for an hour (`Cache-Control: public,
-  max-age=3600`), keyed on the URL without its query string, so visitors cause at most one query
-  to each source an hour per Cloudflare data center. When a source failed, the answer is cached
+  max-age=3600`), keyed on the URL without its query string, so visitors cause at most one read of
+  each source an hour per Cloudflare data center. When a source failed, the answer is cached
   for five minutes instead, so the count comes back soon after the source does.
 - A request for `/api/installs` is not counted: only the install scripts are, as above. Showing
   the count reads nothing about the visitor either.

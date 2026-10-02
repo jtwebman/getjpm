@@ -10,7 +10,7 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 
 const counts = [
-  { id: 'scripts30d', label: t('installs.scripts') },
+  { id: 'scripts', label: t('installs.scripts') },
   { id: 'binaryDownloads', label: t('installs.binary') },
 ];
 ---
@@ -99,14 +99,14 @@ const counts = [
     const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
 
     const load = async () => {
-      let data: { scripts30d?: unknown; binaryDownloads?: unknown } | null = null;
+      let data: { scripts?: unknown; binaryDownloads?: unknown } | null = null;
       try {
         const res = await fetch('/api/installs', { headers: { accept: 'application/json' } });
         if (res.ok) data = await res.json();
       } catch {
         data = null;
       }
-      const scripts = count(data?.scripts30d);
+      const scripts = count(data?.scripts);
       const binaries = count(data?.binaryDownloads);
       list.setAttribute('aria-busy', 'false');
       // Nothing to show: no numbers at all, but the note on what would be counted stays.
@@ -114,7 +114,7 @@ const counts = [
         list.hidden = true;
         return;
       }
-      show('scripts30d', scripts);
+      show('scripts', scripts);
       show('binaryDownloads', binaries);
     };
 

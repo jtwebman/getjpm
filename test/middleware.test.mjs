@@ -1,7 +1,7 @@
 // The Pages Function's request handling, with fetch and the static site mocked.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { counter, handle, installerFor, SCRIPTS_BASE } from '../functions/_middleware.js';
+import { handle, installerFor, SCRIPTS_BASE } from '../functions/_middleware.js';
 
 const SH = '#!/bin/sh\necho install jpm\n';
 const PS1 = '# Install jpm: irm https://getjpm.sh/install.ps1 | iex\n';
@@ -157,12 +157,4 @@ test('a counter that throws never fails the install', async () => {
   });
   assert.equal(res.status, 200);
   assert.equal(await res.text(), SH);
-});
-
-test('the Analytics Engine point holds the script and path and nothing else', () => {
-  const written = [];
-  counter({ INSTALLS: { writeDataPoint: (p) => written.push(p) } })('install.sh', '/');
-  assert.deepEqual(written, [{ blobs: ['install.sh', '/'], doubles: [1], indexes: ['install.sh'] }]);
-  // No binding (local runs, previews): nothing to write, and no error.
-  assert.doesNotThrow(() => counter({})('install.sh', '/'));
 });

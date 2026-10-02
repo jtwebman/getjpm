@@ -1,17 +1,19 @@
 // GET /api/installs: the public install count the home page shows, as JSON.
 //
-//   { "scripts30d": 123, "binaryDownloads": 45, "updated": "2026-10-01T12:00:00.000Z" }
+//   { "scripts": 1234, "scripts30d": 123, "binaryDownloads": 45, "updated": "2026-10-01T12:00:00.000Z" }
 //
-// - scripts30d: install scripts getjpm.sh handed out in the last 30 days, from Workers Analytics
-//   Engine (the points functions/_middleware.js writes). Needs wrangler.toml's CF_ACCOUNT_ID and
-//   the secret CF_ANALYTICS_TOKEN ("Account Analytics: Read"); null without them or on any error.
+// - scripts, scripts30d: install scripts getjpm.sh handed out, all told and in the last 30 days,
+//   from the D1 table functions/_middleware.js counts into (wrangler.toml's DB). Read through the
+//   binding: no API token. Null without the binding or on any error.
 // - binaryDownloads: GitHub's download count for jpm's release files named jpm-*; null on error.
 //
 // The answer is cached at the edge for an hour (Cache API, keyed on the URL without its query),
-// so visitors start at most one pair of upstream queries an hour per data center. Nothing from
-// upstream is passed through: no error text, no headers, and never the token.
+// so visitors start at most one pair of reads an hour per data center. Nothing from upstream is
+// passed through: no error text, no headers.
 
-export const ANALYTICS_SQL = `SELECT SUM(_sample_interval) AS fetched FROM getjpm_installs WHERE timestamp > NOW() - INTERVAL '30' DAY FORMAT JSON`;
+export const COUNTS_SQL = `SELECT COALESCE(SUM(count), 0) AS total,
+  COALESCE(SUM(CASE WHEN day >= ?1 THEN count ELSE 0 END), 0) AS recent
+  FROM installs`;
 export const RELEASES_URL = 'https://api.github.com/repos/jtwebman/jpm/releases?per_page=100';
 export const MAX_AGE = 3600;
 // When a source failed, try again sooner than an hour, still without asking upstream per visit.
@@ -23,27 +25,18 @@ const count = (n) => {
 };
 
 /**
- * Install scripts handed out in the last 30 days, all scripts together, or null.
- * @param {{ CF_ACCOUNT_ID?: string, CF_ANALYTICS_TOKEN?: string }} env
- * @param {typeof fetch} fetchImpl
+ * Install scripts handed out, all told and in the 30 days up to `now`, or nulls.
+ * @param {{ DB?: D1Database }} env
+ * @param {Date} now
  */
-export async function scripts30d(env, fetchImpl = fetch) {
-  const account = env.CF_ACCOUNT_ID;
-  const token = env.CF_ANALYTICS_TOKEN;
-  if (!account || !token || !/^[0-9a-f]{32}$/i.test(account)) return null;
+export async function scriptCounts(env, now) {
+  if (!env.DB) return { scripts: null, scripts30d: null };
   try {
-    const res = await fetchImpl(`https://api.cloudflare.com/client/v4/accounts/${account}/analytics_engine/sql`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${token}` },
-      body: ANALYTICS_SQL,
-    });
-    if (!res.ok) return null;
-    const body = await res.json();
-    if (!Array.isArray(body?.data)) return null;
-    // No points in the window: no row, or a row with a null sum. Both are zero.
-    return count(body.data[0]?.fetched ?? 0);
+    const since = new Date(now.getTime() - 29 * 86_400_000).toISOString().slice(0, 10);
+    const row = await env.DB.prepare(COUNTS_SQL).bind(since).first();
+    return { scripts: count(row?.total), scripts30d: count(row?.recent) };
   } catch {
-    return null;
+    return { scripts: null, scripts30d: null };
   }
 }
 
@@ -82,7 +75,7 @@ export async function handleInstalls(request, env, deps = {}) {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return new Response('Method Not Allowed\n', { status: 405, headers: { allow: 'GET, HEAD', 'content-type': 'text/plain; charset=utf-8' } });
   }
-  // One cache entry, whatever the query string: ?anything cannot force an upstream query.
+  // One cache entry, whatever the query string: ?anything cannot force a fresh read.
   const url = new URL(request.url);
   const key = new Request(`${url.origin}${url.pathname}`, { method: 'GET' });
   const head = (res) => (request.method === 'HEAD' ? new Response(null, res) : res);
@@ -94,9 +87,10 @@ export async function handleInstalls(request, env, deps = {}) {
     // A cache that fails is a miss.
   }
 
-  const [scripts, binaries] = await Promise.all([scripts30d(env, fetchImpl), binaryDownloads(fetchImpl)]);
-  const body = JSON.stringify({ scripts30d: scripts, binaryDownloads: binaries, updated: now().toISOString() });
-  const maxAge = scripts === null || binaries === null ? RETRY_AGE : MAX_AGE;
+  const at = now();
+  const [scripts, binaries] = await Promise.all([scriptCounts(env, at), binaryDownloads(fetchImpl)]);
+  const body = JSON.stringify({ ...scripts, binaryDownloads: binaries, updated: at.toISOString() });
+  const maxAge = scripts.scripts === null || binaries === null ? RETRY_AGE : MAX_AGE;
   const response = new Response(body, {
     headers: {
       'content-type': 'application/json; charset=utf-8',

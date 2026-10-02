@@ -3,16 +3,13 @@ name = "getjpm"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-09-01"
 
-# Install-script counts (functions/_middleware.js): one point per install.sh or install.ps1 handed
-# out, holding only which script and the path asked for. `npm run installs` reads them.
-[[analytics_engine_datasets]]
-binding = "INSTALLS"
-dataset = "getjpm_installs"
-
-# The public count at /api/installs (functions/api/installs.js) reads that dataset through the
-# Analytics Engine SQL API. The account id is not a secret (it is in every dashboard URL). The
-# token, with "Account Analytics: Read" only, is a secret, set once with
-#   npx wrangler pages secret put CF_ANALYTICS_TOKEN --project-name getjpm
-# Without it the script count is null and the page shows only GitHub's download count.
-[vars]
-CF_ACCOUNT_ID = "7001118f85b48a64b8239b870e497802"
+# Install-script counts: functions/_middleware.js adds one to a row per day, script and path for
+# each install.sh or install.ps1 handed out; functions/api/installs.js reads the totals the home
+# page shows. Both go through this binding, so no API token is needed or kept anywhere.
+# The table is migrations/0001_installs.sql:
+#   npx wrangler d1 migrations apply getjpm --remote
+[[d1_databases]]
+binding = "DB"
+database_name = "getjpm"
+database_id = "f22c8ee7-d16c-47a2-9d1c-d91ba4416851"
+migrations_dir = "migrations"

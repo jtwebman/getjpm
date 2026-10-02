@@ -106,15 +106,27 @@ export async function handle(request, next, fetchImpl = fetch, count = () => {})
   return next();
 }
 
+/** One more for the day, the script and the path: the only thing a count holds. */
+export const COUNT_SQL = `INSERT INTO installs (day, script, path, count) VALUES (?1, ?2, ?3, 1)
+  ON CONFLICT (day, script, path) DO UPDATE SET count = count + 1`;
+
 /**
- * One data point per install script handed out, in Workers Analytics Engine (wrangler.toml's
- * INSTALLS): the script and the path, nothing else. No address, user agent, cookie or other
- * identifier is read or stored. Writing does not wait on anything and cannot fail the response.
- * @param {{ INSTALLS?: { writeDataPoint(point: object): void } }} env
+ * Counts each install script handed out in D1 (wrangler.toml's DB, table `installs`): one row per
+ * day, script and path, holding a number. No address, user agent, cookie or other identifier is
+ * read or stored. The write runs after the response (waitUntil) and a failed one is dropped, so a
+ * count never slows or fails an install.
+ * @param {{ DB?: D1Database }} env
+ * @param {(p: Promise<unknown>) => void} waitUntil
+ * @param {() => Date} [now]
  */
-export function counter(env) {
-  return (script, path) => env.INSTALLS?.writeDataPoint({ blobs: [script, path], doubles: [1], indexes: [script] });
+export function counter(env, waitUntil, now = () => new Date()) {
+  return (script, path) => {
+    if (!env.DB) return;
+    const day = now().toISOString().slice(0, 10);
+    waitUntil(env.DB.prepare(COUNT_SQL).bind(day, script, path).run().catch(() => {}));
+  };
 }
 
 /** @type {PagesFunction} */
-export const onRequest = (context) => handle(context.request, () => context.next(), fetch, counter(context.env));
+export const onRequest = (context) =>
+  handle(context.request, () => context.next(), fetch, counter(context.env, (p) => context.waitUntil(p)));

@@ -1,40 +1,39 @@
 // How often jpm is fetched, from the two counts there are:
-//   - install scripts handed out by getjpm.sh, per day and script, from Workers Analytics Engine
-//     (functions/_middleware.js writes them). Needs CLOUDFLARE_ACCOUNT_ID and a
-//     CLOUDFLARE_API_TOKEN with "Account Analytics: Read".
+//   - install scripts handed out by getjpm.sh, per day and script, from the D1 table
+//     functions/_middleware.js counts into, read with `wrangler d1 execute` and your own login
+//     (`npx wrangler login`; no token is kept anywhere).
 //   - release files downloaded from GitHub, per release and file (the installers fetch the binary
 //     from there, so this is closer to an install). Needs nothing.
 // Neither counts people: a fetch is not an install, and nothing identifies who fetched.
 //   npm run installs [-- --days 30]
+import { execFileSync } from 'node:child_process';
+
 const days = Number(process.argv[process.argv.indexOf('--days') + 1]) || 30;
 
-async function scripts() {
-  const account = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const token = process.env.CLOUDFLARE_API_TOKEN;
-  if (!account || !token) {
-    console.log('Install scripts: set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN ("Account Analytics: Read") to see them.\n');
+function scripts() {
+  const since = new Date(Date.now() - (days - 1) * 86_400_000).toISOString().slice(0, 10);
+  const sql = `SELECT day, script, SUM(count) AS fetched FROM installs WHERE day >= '${since}'
+    GROUP BY day, script ORDER BY day, script`;
+  let out;
+  try {
+    out = execFileSync('npx', ['--yes', 'wrangler@4.145.0', 'd1', 'execute', 'getjpm', '--remote', '--json', '--command', sql], {
+      encoding: 'utf8',
+      shell: process.platform === 'win32',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (e) {
+    console.log(`Install scripts: could not read D1 (run \`npx wrangler login\` first): ${String(e.stderr ?? e.message).trim().split('\n').pop()}\n`);
     return;
   }
-  const sql = `SELECT toStartOfInterval(timestamp, INTERVAL '1' DAY) AS day, blob1 AS script,
-      SUM(_sample_interval) AS fetched
-    FROM getjpm_installs
-    WHERE timestamp > NOW() - INTERVAL '${days}' DAY
-    GROUP BY day, script ORDER BY day, script FORMAT JSON`;
-  const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${account}/analytics_engine/sql`, {
-    method: 'POST',
-    headers: { authorization: `Bearer ${token}` },
-    body: sql,
-  });
-  if (!res.ok) throw new Error(`Analytics Engine answered ${res.status}: ${await res.text()}`);
-  const { data } = await res.json();
+  const rows = JSON.parse(out.slice(out.indexOf('[')))[0]?.results ?? [];
   console.log(`Install scripts handed out by getjpm.sh, last ${days} days:`);
-  if (!data.length) console.log('  none yet');
+  if (!rows.length) console.log('  none yet');
   const total = {};
-  for (const row of data) {
-    console.log(`  ${String(row.day).slice(0, 10)}  ${row.script.padEnd(12)} ${row.fetched}`);
+  for (const row of rows) {
+    console.log(`  ${row.day}  ${row.script.padEnd(12)} ${row.fetched}`);
     total[row.script] = (total[row.script] ?? 0) + Number(row.fetched);
   }
-  for (const [script, n] of Object.entries(total)) console.log(`  total        ${script.padEnd(12)} ${n}`);
+  for (const [script, n] of Object.entries(total)) console.log(`  total       ${script.padEnd(12)} ${n}`);
   console.log();
 }
 
@@ -56,5 +55,5 @@ async function releases() {
   }
 }
 
-await scripts();
+scripts();
 await releases();
