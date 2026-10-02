@@ -8,3 +8,11 @@ compatibility_date = "2026-09-01"
 [[analytics_engine_datasets]]
 binding = "INSTALLS"
 dataset = "getjpm_installs"
+
+# The public count at /api/installs (functions/api/installs.js) reads that dataset through the
+# Analytics Engine SQL API. The account id is not a secret (it is in every dashboard URL). The
+# token, with "Account Analytics: Read" only, is a secret, set once with
+#   npx wrangler pages secret put CF_ANALYTICS_TOKEN --project-name getjpm
+# Without it the script count is null and the page shows only GitHub's download count.
+[vars]
+CF_ACCOUNT_ID = "7001118f85b48a64b8239b870e497802"

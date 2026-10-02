@@ -1,0 +1,228 @@
+---
+// The public install count: two numbers from /api/installs (functions/api/installs.js), loaded in
+// the browser, and a plain statement of what they count and what they cannot know.
+import { useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const counts = [
+  { id: 'scripts30d', label: t('installs.scripts') },
+  { id: 'binaryDownloads', label: t('installs.binary') },
+];
+---
+
+<section id="installs" class="section" aria-labelledby="installs-title">
+  <div class="container installs">
+    <div class="section-head center">
+      <p class="eyebrow">{t('installs.eyebrow')}</p>
+      <h2 id="installs-title" class="section-title">{t('installs.title')}</h2>
+    </div>
+    <ul
+      class="counts"
+      data-installs
+      data-locale={locale.code}
+      data-unavailable={t('installs.unavailable')}
+      data-no-release={t('installs.noRelease')}
+      aria-live="polite"
+      aria-busy="true"
+    >
+      {
+        counts.map((c) => (
+          <li class="count" data-count={c.id} data-state="loading">
+            <strong class="value">
+              <span class="shown" aria-hidden="true" />
+              <span class="sr-only" data-sr>
+                {t('installs.loading')}
+              </span>
+            </strong>
+            <span class="label">{c.label}</span>
+          </li>
+        ))
+      }
+    </ul>
+    <div class="honesty">
+      <h3>{t('installs.noteTitle')}</h3>
+      <p>{t('installs.note')}</p>
+      <p>
+        <a class="how" href="https://github.com/jtwebman/getjpm#what-the-site-counts">{t('installs.how')} <span aria-hidden="true">→</span></a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  const list = document.querySelector<HTMLElement>('[data-installs]');
+  if (list) {
+    const fmt = new Intl.NumberFormat(list.dataset.locale);
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ease = (p: number) => 1 - (1 - p) ** 3;
+
+    // The number on screen counts up (not under reduced motion); screen readers get the final
+    // text once, through the live region, and never the frames in between.
+    const show = (id: string, value: number | null) => {
+      const item = list.querySelector<HTMLElement>(`[data-count="${id}"]`);
+      const shown = item?.querySelector<HTMLElement>('.shown');
+      const sr = item?.querySelector<HTMLElement>('[data-sr]');
+      if (!item || !shown || !sr) return;
+      if (value === null) {
+        item.dataset.state = 'none';
+        shown.textContent = '—';
+        sr.textContent = list.dataset.unavailable ?? '';
+        return;
+      }
+      if (id === 'binaryDownloads' && value === 0) {
+        item.dataset.state = 'text';
+        shown.textContent = sr.textContent = list.dataset.noRelease ?? '';
+        return;
+      }
+      item.dataset.state = 'number';
+      sr.textContent = fmt.format(value);
+      if (reduced || value < 10) {
+        shown.textContent = fmt.format(value);
+        return;
+      }
+      const start = performance.now();
+      const ms = 1100;
+      const frame = (now: number) => {
+        const p = Math.min(1, (now - start) / ms);
+        shown.textContent = fmt.format(Math.round(value * ease(p)));
+        if (p < 1) requestAnimationFrame(frame);
+      };
+      shown.textContent = fmt.format(0);
+      requestAnimationFrame(frame);
+    };
+
+    const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+
+    const load = async () => {
+      let data: { scripts30d?: unknown; binaryDownloads?: unknown } | null = null;
+      try {
+        const res = await fetch('/api/installs', { headers: { accept: 'application/json' } });
+        if (res.ok) data = await res.json();
+      } catch {
+        data = null;
+      }
+      const scripts = count(data?.scripts30d);
+      const binaries = count(data?.binaryDownloads);
+      list.setAttribute('aria-busy', 'false');
+      // Nothing to show: no numbers at all, but the note on what would be counted stays.
+      if (scripts === null && binaries === null) {
+        list.hidden = true;
+        return;
+      }
+      show('scripts30d', scripts);
+      show('binaryDownloads', binaries);
+    };
+
+    // Asked for once, as the section comes near the screen, so the count-up is seen.
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            io.disconnect();
+            void load();
+          }
+        },
+        { rootMargin: '0px 0px 200px 0px' },
+      );
+      io.observe(list);
+    } else {
+      void load();
+    }
+  }
+</script>
+
+<style>
+  @layer components {
+    .installs {
+      max-inline-size: 52rem;
+    }
+    .counts {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      gap: var(--size-4);
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    }
+    .count {
+      display: grid;
+      gap: var(--size-2);
+      align-content: start;
+      padding: var(--size-5);
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-3);
+      box-shadow: var(--shadow);
+    }
+    /* The same height whatever it holds, a placeholder, a number or words: nothing moves when
+       the count arrives. */
+    .value {
+      display: flex;
+      align-items: center;
+      min-block-size: 3rem;
+      font-size: var(--font-size-6);
+      font-weight: var(--font-weight-8);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--accent-strong);
+      font-variant-numeric: tabular-nums;
+    }
+    .shown {
+      overflow-wrap: anywhere;
+    }
+    [data-state='loading'] .shown {
+      display: block;
+      inline-size: 5ch;
+      block-size: 0.8em;
+      border-radius: var(--radius-2);
+      background: var(--surface-3);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      [data-state='loading'] .shown {
+        animation: pulse 1.4s var(--ease-in-out-2) infinite;
+      }
+    }
+    @keyframes pulse {
+      50% {
+        opacity: 0.45;
+      }
+    }
+    [data-state='none'] .value {
+      color: var(--text-2);
+    }
+    [data-state='text'] .value {
+      font-size: var(--font-size-4);
+      font-weight: var(--font-weight-7);
+      letter-spacing: 0;
+    }
+    .label {
+      color: var(--text-2);
+      font-size: 0.9375rem;
+    }
+    .honesty {
+      margin-block-start: var(--size-5);
+      padding: var(--size-5) var(--size-6);
+      border-inline-start: 4px solid var(--accent);
+      border-radius: 0 var(--radius-3) var(--radius-3) 0;
+      background: var(--accent-soft);
+      & h3 {
+        font-size: var(--font-size-2);
+        margin-block-end: var(--size-2);
+      }
+      & p {
+        color: var(--text-1);
+        line-height: var(--font-lineheight-4);
+      }
+      & p + p {
+        margin-block-start: var(--size-3);
+      }
+    }
+    .how {
+      font-weight: var(--font-weight-6);
+    }
+  }
+</style>

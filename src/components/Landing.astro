@@ -8,6 +8,7 @@ import StorageDiagram from './StorageDiagram.astro';
 import Security from './Security.astro';
 import Switch from './Switch.astro';
 import Story from './Story.astro';
+import Installs from './Installs.astro';
 import { useTranslations, type Locale } from '../i18n';
 
 interface Props {
@@ -35,4 +36,5 @@ const t = useTranslations(locale);
   <StorageDiagram locale={locale} />
   <Security locale={locale} />
   <Story locale={locale} />
+  <Installs locale={locale} />
 </Base>

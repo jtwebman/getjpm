@@ -12,9 +12,9 @@ irm https://getjpm.sh/install.ps1 | iex              # Windows
 ```
 
 A static [Astro](https://astro.build) site styled with [Open Props](https://open-props.style)
-tokens and plain modern CSS (nesting, `@layer`, container queries), in ten languages, plus one
-Cloudflare Pages Function for the scripts. No trackers, analytics, web fonts or CDNs: everything
-is served from the site.
+tokens and plain modern CSS (nesting, `@layer`, container queries), in ten languages, plus
+Cloudflare Pages Functions for the scripts and the public install count. No trackers, page
+analytics, web fonts or CDNs: everything is served from the site.
 
 ## Layout
 
@@ -22,13 +22,14 @@ is served from the site.
 | --- | --- |
 | `src/pages/index.astro`, `src/pages/[locale]/index.astro` | The home page: English at `/`, the other languages at `/zh/`, `/ja/`, … |
 | `src/layouts/Base.astro` | The shell every page uses: head and meta, `hreflang` links, theme, header and footer |
-| `src/components/` | The header, footer and the home page's sections (`Hero`, `SpeedChart`, `Switch`, `Lean`, `StorageDiagram`, `Security`, `Story`) |
+| `src/components/` | The header, footer and the home page's sections (`Hero`, `SpeedChart`, `Switch`, `Lean`, `StorageDiagram`, `Security`, `Story`, `Installs`) |
 | `src/data/bench.ts` | The benchmark numbers the charts draw, from jpm's [docs/benchmarks.md](https://github.com/jtwebman/jpm/blob/main/docs/benchmarks.md) |
 | `src/i18n/` | One dictionary per language; `en.json` is the source |
 | `src/styles/` | Open Props imports, the theme tokens and the global styles |
 | `src/scripts/bars.ts` | The bar charts' rows and grow-on-scroll animation, shared by the speed and lean charts |
 | `public/` | Files served as they are: favicon, Open Graph image, `_headers`, `robots.txt` |
 | `functions/_middleware.js` | The Pages Function that serves the install scripts |
+| `functions/api/installs.js` | `GET /api/installs`: the public install count the page shows |
 | `test/` | Tests for the function and the dictionaries (`npm test`) |
 | `scripts/preview.mjs` | Writes the built English page as one self-contained HTML file |
 | `scripts/og.ps1` | Renders `public/og.png` with .NET's System.Drawing on Windows |
@@ -151,6 +152,28 @@ an install. A fetch is not an install, and nothing here tells one person from an
 The release files' download counts on GitHub are the other number: the installers fetch the
 binary from there. `npm run installs` prints both (the script counts need `CLOUDFLARE_ACCOUNT_ID`
 and a `CLOUDFLARE_API_TOKEN` with "Account Analytics: Read"; GitHub's need nothing).
+
+The home page shows both, in public, near the bottom: the install scripts handed out in the last
+30 days, and the downloads of the jpm binary (release files named `jpm-*`) from GitHub, with the
+paragraph above in plain words next to them. The page fetches them in the browser from
+`GET /api/installs` (`functions/api/installs.js`), which answers
+`{ "scripts30d": n, "binaryDownloads": n, "updated": "<ISO time>" }`:
+
+- `scripts30d` is `SUM(_sample_interval)` over `getjpm_installs` for the last 30 days, all
+  scripts together, from the Analytics Engine SQL API. It needs `wrangler.toml`'s `CF_ACCOUNT_ID`
+  and the secret `CF_ANALYTICS_TOKEN` ("Account Analytics: Read" only), set with
+  `npx wrangler pages secret put CF_ANALYTICS_TOKEN --project-name getjpm`.
+- `binaryDownloads` is the sum of `download_count` over every release's `jpm-*` files, from
+  GitHub's API without a token. Zero means there is no release yet, and the page says so.
+- Either is `null` when its source is missing or fails, and the page shows a dash for it (and
+  only the explanation when both are). No upstream error text or header is passed on, and the
+  token is never logged or returned.
+- The answer is cached at the edge with the Cache API for an hour (`Cache-Control: public,
+  max-age=3600`), keyed on the URL without its query string, so visitors cause at most one query
+  to each source an hour per Cloudflare data center. When a source failed, the answer is cached
+  for five minutes instead, so the count comes back soon after the source does.
+- A request for `/api/installs` is not counted: only the install scripts are, as above. Showing
+  the count reads nothing about the visitor either.
 
 ## License
 
