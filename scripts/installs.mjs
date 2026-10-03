@@ -1,11 +1,11 @@
 // How often jpm is fetched, from the two counts there are:
 //   - install scripts handed out by getjpm.sh, per day and script, from the D1 table
 //     functions/_middleware.js counts into, read with `wrangler d1 execute` and your own login
-//     (`npx wrangler login`; no token is kept anywhere).
+//     (`jpx wrangler@4.145.0 login`; no token is kept anywhere).
 //   - release files downloaded from GitHub, per release and file (the installers fetch the binary
 //     from there, so this is closer to an install). Needs nothing.
 // Neither counts people: a fetch is not an install, and nothing identifies who fetched.
-//   npm run installs [-- --days 30]
+//   jpm run installs -- --days 30
 import { execFileSync } from 'node:child_process';
 
 const days = Number(process.argv[process.argv.indexOf('--days') + 1]) || 30;
@@ -16,13 +16,12 @@ function scripts() {
     GROUP BY day, script ORDER BY day, script`;
   let out;
   try {
-    out = execFileSync('npx', ['--yes', 'wrangler@4.145.0', 'd1', 'execute', 'getjpm', '--remote', '--json', '--command', sql], {
+    out = execFileSync('jpx', ['wrangler@4.145.0', 'd1', 'execute', 'getjpm', '--remote', '--json', '--command', sql], {
       encoding: 'utf8',
-      shell: process.platform === 'win32',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
   } catch (e) {
-    console.log(`Install scripts: could not read D1 (run \`npx wrangler login\` first): ${String(e.stderr ?? e.message).trim().split('\n').pop()}\n`);
+    console.log(`Install scripts: could not read D1 (run \`jpx wrangler@4.145.0 login\` first): ${String(e.stderr ?? e.message).trim().split('\n').pop()}\n`);
     return;
   }
   const rows = JSON.parse(out.slice(out.indexOf('[')))[0]?.results ?? [];

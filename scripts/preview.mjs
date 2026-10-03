@@ -1,6 +1,6 @@
 // Writes one self-contained HTML file from the built English page (dist/index.html), with its
 // stylesheet, scripts and favicon inlined, for sharing a preview without a server:
-//   npm run build && node scripts/preview.mjs out.html
+//   jpm run build && node scripts/preview.mjs out.html
 // The CSP <meta> is left out (its hashes do not cover inlined scripts), and links to other pages
 // and the install scripts only work on the real site.
 import { readFileSync, writeFileSync } from 'node:fs';

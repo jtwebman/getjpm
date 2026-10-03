@@ -1,4 +1,4 @@
-# The Cloudflare Pages project getjpm.sh deploys to (`npm run deploy`).
+# The Cloudflare Pages project getjpm.sh deploys to (`jpm run deploy`).
 name = "getjpm"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-09-01"
@@ -7,7 +7,7 @@ compatibility_date = "2026-09-01"
 # each install.sh or install.ps1 handed out; functions/api/installs.js reads the totals the home
 # page shows. Both go through this binding, so no API token is needed or kept anywhere.
 # The table is migrations/0001_installs.sql:
-#   npx wrangler d1 migrations apply getjpm --remote
+#   jpx wrangler@4.145.0 d1 migrations apply getjpm --remote
 [[d1_databases]]
 binding = "DB"
 database_name = "getjpm"

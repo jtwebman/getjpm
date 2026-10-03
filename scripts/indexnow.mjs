@@ -1,6 +1,6 @@
 // Tells IndexNow (Bing, Yandex, Naver, Seznam and the others that share it) that the site's pages
 // changed, so they are crawled again within hours, not days. Bing's index is also what ChatGPT
-// search, Copilot and DuckDuckGo draw on. Run after a deploy (`npm run deploy` does):
+// search, Copilot and DuckDuckGo draw on. Run after a deploy (`jpm run deploy` does):
 //   node scripts/indexnow.mjs
 // The key is the name of the file in public/ that holds it; the search engines fetch that file
 // from the site to check the request is ours. The URLs are the built sitemap's.
@@ -15,7 +15,7 @@ const key = keyFile.slice(0, -4);
 
 const sitemap = readFileSync('dist/sitemap.xml', 'utf8');
 const urlList = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-if (!urlList.length) throw new Error('no URLs in dist/sitemap.xml: run `npm run build` first');
+if (!urlList.length) throw new Error('no URLs in dist/sitemap.xml: run `jpm run build` first');
 
 const res = await fetch(ENDPOINT, {
   method: 'POST',

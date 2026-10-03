@@ -30,32 +30,31 @@ analytics, web fonts or CDNs: everything is served from the site.
 | `public/` | Files served as they are: favicon, Open Graph image, `_headers`, `robots.txt` |
 | `functions/_middleware.js` | The Pages Function that serves the install scripts |
 | `functions/api/installs.js` | `GET /api/installs`: the public install count the page shows |
-| `test/` | Tests for the function and the dictionaries (`npm test`) |
+| `test/` | Tests for the function and the dictionaries (`jpm test`) |
 | `scripts/preview.mjs` | Writes the built English page as one self-contained HTML file |
 | `scripts/og.ps1` | Renders `public/og.png` with .NET's System.Drawing on Windows |
 
 ## Working on it
 
-Node.js 24 (`.nvmrc`) and npm:
+Node.js 24 (`.nvmrc`) and [jpm](https://getjpm.sh) 1.0.0 or later:
 
 ```sh
-npm ci
-npm run dev        # http://localhost:4321
-npm run build      # the static site, in dist/
-npm run preview    # serve dist/ (the CSP <meta> is checked only in a build, not in dev)
-npm run check      # astro check: types and templates
-npm test           # the Pages Function and the dictionaries
+jpm ci
+jpm run dev        # http://localhost:4321
+jpm run build      # the static site, in dist/
+jpm run preview    # serve dist/ (the CSP <meta> is checked only in a build, not in dev)
+jpm run check      # astro check: types and templates
+jpm test           # the Pages Function and the dictionaries
 node scripts/preview.mjs preview.html   # after a build: one file to share
 ```
 
-Dependencies are pinned (`save-exact` in `.npmrc`, and `package-lock.json`): `astro` and
-`open-props`, plus `@astrojs/check` and `typescript` for `astro check`. Once jpm 0.1.0 is
-released, the build moves to jpm itself (`jpm ci` and `jpm run build`, with `jpm.lock`
-imported from `package-lock.json`); Cloudflare Pages cannot install jpm before there is a
-release to download.
+Dependencies are pinned (`save-exact` in `.npmrc`, and `jpm.lock`): `astro` and
+`open-props`, plus `@astrojs/check` and `typescript` for `astro check`. `jpm.lock` was
+imported from npm's `package-lock.json`, with the same versions; the site builds the same
+with either.
 
-`npm run dev` does not run the Pages Function. To try it locally, Cloudflare's
-`npx wrangler pages dev dist` runs the built site with `functions/`; `npm test` covers its
+`jpm run dev` does not run the Pages Function. To try it locally, Cloudflare's
+`jpx wrangler@4.145.0 pages dev dist` runs the built site with `functions/`; `jpm test` covers its
 logic with `fetch` mocked.
 
 ## The install scripts
@@ -85,7 +84,7 @@ Português do Brasil (`/pt/`), Français (`/fr/`), Deutsch (`/de/`), Русск�
 Українська (`/uk/`), through Astro's i18n routing.
 
 Every string is in `src/i18n/<locale>.json`, with English as the source. A key missing from a
-language falls back to English with a warning in the build, and `npm test` fails on it, on a key
+language falls back to English with a warning in the build, and `jpm test` fails on it, on a key
 English does not have, and on a placeholder (`{link}`) or `<code>` span that differs from the
 English. The translations are AI-written, and the footer says so in each language; corrections
 from native speakers are welcome as issues or pull requests. Product names, commands, file names
@@ -118,13 +117,13 @@ The site is a Cloudflare Pages project, `getjpm`, deployed from this repository 
 deployed with the site; it needs no settings or bindings. To deploy:
 
 ```sh
-npx wrangler login          # once, in a browser
-npm run deploy              # build, deploy to Cloudflare Pages, then notify IndexNow
+jpx wrangler@4.145.0 login    # once, in a browser
+jpm run deploy                  # build, deploy to Cloudflare Pages, then notify IndexNow
 ```
 
-`npm run deploy` runs a pinned wrangler through `npx` rather than keeping it (and workerd, about
+`jpm run deploy` runs a pinned wrangler through `jpx` rather than keeping it (and workerd, about
 60 MB) in `node_modules`. After the deploy it tells IndexNow, which Bing, Yandex, Naver, Seznam
-and others share, that the sitemap's pages changed (`scripts/indexnow.mjs`; `npm run indexnow`
+and others share, that the sitemap's pages changed (`scripts/indexnow.mjs`; `jpm run indexnow`
 runs it alone). The IndexNow key is the 32-hex-digit `.txt` file in `public/`: the search
 engines fetch it from the site to check a ping is ours.
 
@@ -152,7 +151,7 @@ count never slows or fails an install. A fetch is not an install, and nothing he
 person from another.
 
 The release files' download counts on GitHub are the other number: the installers fetch the
-binary from there. `npm run installs` prints both: the script counts through `wrangler d1 execute`
+binary from there. `jpm run installs` prints both: the script counts through `wrangler d1 execute`
 with your own wrangler login, GitHub's with no login at all.
 
 The home page shows both, in public, near the bottom: the install scripts handed out since

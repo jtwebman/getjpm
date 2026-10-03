@@ -10,7 +10,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "test": "node --test \"test/*.test.mjs\"",
-    "deploy": "astro build && npx --yes wrangler@4.145.0 pages deploy dist --project-name getjpm --branch main && node scripts/indexnow.mjs",
+    "deploy": "astro build && jpx wrangler@4.145.0 pages deploy dist --project-name getjpm --branch main && node scripts/indexnow.mjs",
     "indexnow": "node scripts/indexnow.mjs",
     "installs": "node scripts/installs.mjs"
   },
