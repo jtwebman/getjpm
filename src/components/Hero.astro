@@ -7,9 +7,16 @@ interface Props {
 }
 const { locale } = Astro.props;
 const t = useTranslations(locale);
+// jpm's one release is a candidate, which the install scripts take only when JPM_VERSION names it:
+// without it they ask for the latest release, and there is none yet. Gone at 1.0.0.
+const candidate = 'v1.0.0-rc.1';
 const commands = [
-  { id: 'unix', label: t('hero.unix'), cmd: 'curl -fsSL https://getjpm.sh | sh' },
-  { id: 'windows', label: t('hero.windows'), cmd: 'irm https://getjpm.sh/install.ps1 | iex' },
+  { id: 'unix', label: t('hero.unix'), cmd: `curl -fsSL https://getjpm.sh | JPM_VERSION=${candidate} sh` },
+  {
+    id: 'windows',
+    label: t('hero.windows'),
+    cmd: `$env:JPM_VERSION="${candidate}"; irm https://getjpm.sh/install.ps1 | iex`,
+  },
 ];
 const stats = [
   { value: '~2 MB', label: t('hero.stat.size') },
