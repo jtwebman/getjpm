@@ -12,8 +12,11 @@ const days = Number(process.argv[process.argv.indexOf('--days') + 1]) || 30;
 
 function scripts() {
   const since = new Date(Date.now() - (days - 1) * 86_400_000).toISOString().slice(0, 10);
-  const sql = `SELECT day, script, SUM(count) AS fetched FROM installs WHERE day >= '${since}'
-    GROUP BY day, script ORDER BY day, script`;
+  // One line: on Windows wrangler runs through its .cmd shim, and cmd.exe ends the command at a
+  // line break, which dropped the GROUP BY and summed every row into one.
+  const sql =
+    `SELECT day, script, SUM(count) AS fetched FROM installs WHERE day >= '${since}' ` +
+    'GROUP BY day, script ORDER BY day, script';
   let out;
   try {
     out = execFileSync('jpx', ['wrangler@4.145.0', 'd1', 'execute', 'getjpm', '--remote', '--json', '--command', sql], {
