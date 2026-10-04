@@ -68,6 +68,10 @@ logic with `fetch` mocked.
   so `curl -fsSL https://getjpm.sh | sh` and `irm https://getjpm.sh | iex` both work. Link
   preview and search crawlers (Slack, Discord, Twitter, Googlebot, …) get the page. The page's
   response carries `Vary: User-Agent, Accept`.
+- `/apt/` is jpm's apt repository: its key (`jpm.gpg`, `jpm.asc`) and signed index
+  (`dists/stable/…`) fetched byte for byte from the `apt` branch of jpm's repository, which
+  jpm's release workflow writes, and each package (`pool/main/j/jpm/jpm_<version>_<arch>.deb`)
+  a redirect to that release's `.deb`. Nothing else of the branch is served.
 - Everything else is the static site.
 
 The scripts are not copied here. They are fetched from jpm's repository,
