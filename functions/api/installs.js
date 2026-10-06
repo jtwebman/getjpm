@@ -1,13 +1,10 @@
 // GET /api/installs: the public install count the home page shows, as JSON.
 //
-//   { "installs": 12, "binaryDownloads": 45, "updated": "2026-10-01T12:00:00.000Z" }
+//   { "installs": 12, "updated": "2026-10-01T12:00:00.000Z" }
 //
-// Both are GitHub's own download counts of jpm's release files, over every release:
-// - installs: downloads of SHA256SUMS, which install.sh and install.ps1 fetch once a run to check
-//   the binary, and of jpm_*.deb, which apt fetches (getjpm.sh/apt redirects there).
-// - binaryDownloads: downloads of the release files named jpm-*, from the installers, the release
-//   page and anything else.
-// getjpm.sh counts nothing itself. Either is null on any error.
+// installs is GitHub's own download count, over every release, of SHA256SUMS, which install.sh
+// and install.ps1 fetch once a run to check the binary, and of jpm_*.deb, which apt fetches
+// (getjpm.sh/apt redirects there). getjpm.sh counts nothing itself. Null on any error.
 //
 // The answer is cached at the edge for an hour (Cache API, keyed on the URL without its query),
 // so visitors start at most one read of GitHub an hour per data center. Nothing from upstream is
@@ -17,7 +14,7 @@ export const RELEASES_URL = 'https://api.github.com/repos/jtwebman/jpm/releases?
 export const MAX_AGE = 3600;
 // When GitHub failed, try again sooner than an hour, still without asking it per visit.
 export const RETRY_AGE = 300;
-export const CACHE_SHAPE = 'installs-v2';
+export const CACHE_SHAPE = 'installs-v3';
 
 const count = (n) => {
   const v = Number(n);
@@ -27,12 +24,11 @@ const count = (n) => {
 const isInstall = (name) => name === 'SHA256SUMS' || /^jpm_.*\.deb$/.test(name);
 
 /**
- * Installs (SHA256SUMS and .deb downloads) and binary downloads (jpm-* files), over every release,
- * or nulls.
+ * Installs (SHA256SUMS and .deb downloads) over every release, or null.
  * @param {typeof fetch} fetchImpl
  */
 export async function releaseCounts(fetchImpl = fetch) {
-  const none = { installs: null, binaryDownloads: null };
+  const none = { installs: null };
   try {
     const res = await fetchImpl(RELEASES_URL, {
       headers: { accept: 'application/vnd.github+json', 'user-agent': 'getjpm.sh' },
@@ -41,16 +37,12 @@ export async function releaseCounts(fetchImpl = fetch) {
     const releases = await res.json();
     if (!Array.isArray(releases)) return none;
     let installs = 0;
-    let binaryDownloads = 0;
     for (const release of releases) {
       for (const asset of release?.assets ?? []) {
-        if (typeof asset?.name !== 'string') continue;
-        const n = count(asset.download_count) ?? 0;
-        if (isInstall(asset.name)) installs += n;
-        else if (asset.name.startsWith('jpm-')) binaryDownloads += n;
+        if (typeof asset?.name === 'string' && isInstall(asset.name)) installs += count(asset.download_count) ?? 0;
       }
     }
-    return { installs, binaryDownloads };
+    return { installs };
   } catch {
     return none;
   }

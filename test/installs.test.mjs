@@ -48,34 +48,33 @@ const req = (path = '/api/installs', method = 'GET') => new Request(`https://get
 const run = (up, { cache = memoryCache(), request = req() } = {}) =>
   handleInstalls(request, {}, { fetchImpl: up.fetchImpl, cache, now: NOW });
 
-test('installs are SHA256SUMS and .deb downloads; binary downloads the jpm-* files', async () => {
+test('installs are SHA256SUMS and .deb downloads', async () => {
   const res = await run(upstream());
   assert.equal(res.status, 200);
   assert.equal(res.headers.get('content-type'), 'application/json; charset=utf-8');
   assert.equal(res.headers.get('cache-control'), 'public, max-age=3600');
-  // install.sh downloaded from the release page is neither: running it fetches SHA256SUMS.
-  assert.deepEqual(await res.json(), { installs: 42, binaryDownloads: 60, updated: '2026-10-01T12:00:00.000Z' });
+  // Neither the binaries nor install.sh from the release page: running the script fetches SHA256SUMS.
+  assert.deepEqual(await res.json(), { installs: 42, updated: '2026-10-01T12:00:00.000Z' });
 });
 
-test('no releases are zero of each', async () => {
+test('no releases are zero installs', async () => {
   const res = await run(upstream({ github: [] }));
-  assert.deepEqual(await res.json(), { installs: 0, binaryDownloads: 0, updated: '2026-10-01T12:00:00.000Z' });
+  assert.deepEqual(await res.json(), { installs: 0, updated: '2026-10-01T12:00:00.000Z' });
 });
 
-test('GitHub failing gives nulls, and a shorter cache', async () => {
+test('GitHub failing gives null, and a shorter cache', async () => {
   for (const github of [403, 500, 'throw', { message: 'not a list' }]) {
     const res = await run(upstream({ github }));
     const body = await res.json();
     assert.equal(body.installs, null, String(github));
-    assert.equal(body.binaryDownloads, null, String(github));
     assert.equal(res.headers.get('cache-control'), 'public, max-age=300');
   }
 });
 
-test('nothing from upstream reaches the response: only the three fields', async () => {
+test('nothing from upstream reaches the response: only the two fields', async () => {
   for (const github of [500, 'throw', RELEASES]) {
     const res = await run(upstream({ github }));
-    assert.deepEqual(Object.keys(await res.json()), ['installs', 'binaryDownloads', 'updated']);
+    assert.deepEqual(Object.keys(await res.json()), ['installs', 'updated']);
     assert.equal(res.headers.get('x-upstream'), null);
   }
 });
@@ -89,7 +88,7 @@ test('the answer is cached: one read of GitHub, whatever the query string', asyn
   assert.equal(second, first);
   assert.equal(busted, first);
   assert.equal(up.calls.length, 1);
-  assert.deepEqual([...cache.store.keys()], ['https://getjpm.sh/api/installs?shape=installs-v2']);
+  assert.deepEqual([...cache.store.keys()], ['https://getjpm.sh/api/installs?shape=installs-v3']);
 });
 
 test('a cache that throws is a miss, not an error', async () => {

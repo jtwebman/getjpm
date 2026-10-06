@@ -1,5 +1,5 @@
 ---
-// The public install count: two numbers from /api/installs (functions/api/installs.js), loaded in
+// The public install count: one number from /api/installs (functions/api/installs.js), loaded in
 // the browser, and a plain statement of what they count and what they cannot know.
 import { useTranslations, type Locale } from '../i18n';
 
@@ -9,10 +9,7 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 
-const counts = [
-  { id: 'installs', label: t('installs.installs') },
-  { id: 'binaryDownloads', label: t('installs.binary') },
-];
+const counts = [{ id: 'installs', label: t('installs.installs') }];
 ---
 
 <section id="installs" class="section" aria-labelledby="installs-title">
@@ -26,7 +23,6 @@ const counts = [
       data-installs
       data-locale={locale.code}
       data-unavailable={t('installs.unavailable')}
-      data-no-release={t('installs.noRelease')}
       aria-live="polite"
       aria-busy="true"
     >
@@ -74,11 +70,6 @@ const counts = [
         sr.textContent = list.dataset.unavailable ?? '';
         return;
       }
-      if (id === 'binaryDownloads' && value === 0) {
-        item.dataset.state = 'text';
-        shown.textContent = sr.textContent = list.dataset.noRelease ?? '';
-        return;
-      }
       item.dataset.state = 'number';
       sr.textContent = fmt.format(value);
       if (reduced || value < 10) {
@@ -99,23 +90,23 @@ const counts = [
     const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
 
     const load = async () => {
-      let data: { installs?: unknown; binaryDownloads?: unknown } | null = null;
+      let data: { installs?: unknown } | null = null;
       try {
-        const res = await fetch('/api/installs', { headers: { accept: 'application/json' } });
+        // ?v names the answer's shape: a browser holding an older answer, cached for an hour,
+        // asks again instead of showing a dash.
+        const res = await fetch('/api/installs?v=3', { headers: { accept: 'application/json' } });
         if (res.ok) data = await res.json();
       } catch {
         data = null;
       }
       const installs = count(data?.installs);
-      const binaries = count(data?.binaryDownloads);
       list.setAttribute('aria-busy', 'false');
-      // Nothing to show: no numbers at all, but the note on what would be counted stays.
-      if (installs === null && binaries === null) {
+      // Nothing to show: no number, but the note on what would be counted stays.
+      if (installs === null) {
         list.hidden = true;
         return;
       }
       show('installs', installs);
-      show('binaryDownloads', binaries);
     };
 
     // Asked for once, as the section comes near the screen, so the count-up is seen.
@@ -146,7 +137,8 @@ const counts = [
       padding: 0;
       display: grid;
       gap: var(--size-4);
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+      grid-template-columns: minmax(0, 24rem);
+      justify-content: center;
     }
     .count {
       display: grid;

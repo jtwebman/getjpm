@@ -145,33 +145,29 @@ curl -fsS -H 'Accept: text/html' -A 'Mozilla/5.0' https://getjpm.sh | head -c 10
 
 ## What the site counts
 
-Nothing. getjpm.sh keeps no count, log or record of its own. The home page shows two of GitHub's
-own download counts of jpm's release files, over every release:
-
-- **Installs**: downloads of `SHA256SUMS` and of `jpm_*.deb`. `install.sh` and `install.ps1`
-  download the release's `SHA256SUMS` once a run to check the binary, and `apt` downloads a
-  `.deb` (`/apt/` redirects there), so these are installs through the scripts and apt. Someone
-  checking a release by hand adds one too.
-- **Binary downloads**: downloads of the release files named `jpm-*`, from the installers, the
-  release page and any other tool.
+Nothing. getjpm.sh keeps no count, log or record of its own. The home page shows one of GitHub's
+own download counts: **installs**, the downloads of `SHA256SUMS` and of `jpm_*.deb` over every
+release. `install.sh` and `install.ps1` download the release's `SHA256SUMS` once a run to check
+the binary, and `apt` downloads a `.deb` (`/apt/` redirects there), so these are installs through
+the scripts and apt. Someone checking a release by hand adds one too.
 
 An install script fetched from getjpm.sh is not counted: most fetches are people and tools
-reading the script, link previews and crawlers, not installs.
+reading the script, link previews and crawlers, not installs. Nor are the `jpm-*` binaries,
+which the release page and other tools fetch as well; `jpm run installs` prints them per release
+and file, with the installs.
 
-The page fetches the numbers in the browser from `GET /api/installs` (`functions/api/installs.js`),
-which answers `{ "installs": n, "binaryDownloads": n, "updated": "<ISO time>" }`:
+The page fetches the number in the browser from `GET /api/installs` (`functions/api/installs.js`),
+which answers `{ "installs": n, "updated": "<ISO time>" }`:
 
-- Both come from one read of GitHub's API without a token. Zero binary downloads means there is
-  no release yet, and the page says so.
-- Both are `null` when GitHub fails, and the page shows a dash (and only the explanation when
-  both are). No upstream error text or header is passed on.
+- It comes from one read of GitHub's API without a token.
+- It is `null` when GitHub fails, and the page then shows only the explanation. No upstream error
+  text or header is passed on.
 - The answer is cached at the edge with the Cache API for an hour (`Cache-Control: public,
   max-age=3600`), keyed on the URL without its query string, so visitors cause at most one read
   of GitHub an hour per Cloudflare data center. When GitHub failed, the answer is cached for five
-  minutes instead.
+  minutes instead. The page asks for `/api/installs?v=3`, so a browser holding an answer of an
+  older shape asks again.
 - Showing the count reads nothing about the visitor.
-
-`jpm run installs` prints the same counts per release and file.
 
 ## License
 
