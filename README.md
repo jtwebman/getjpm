@@ -145,37 +145,33 @@ curl -fsS -H 'Accept: text/html' -A 'Mozilla/5.0' https://getjpm.sh | head -c 10
 
 ## What the site counts
 
-getjpm.sh counts the install scripts it hands out, and nothing else. For each `install.sh` or
-`install.ps1` the Pages Function serves, it adds one to a row of a D1 table (`wrangler.toml`'s `DB`,
-database `getjpm`, table `installs` from `migrations/0001_installs.sql`) kept per UTC day, script,
-and path asked for (`/`, `/install.sh` or `/install.ps1`). A row holds those three and a number.
-No IP address, user agent, cookie or other identifier is read or stored, the page itself is not
-counted, and the write runs after the response (`waitUntil`) and is dropped if it fails, so a
-count never slows or fails an install. A fetch is not an install, and nothing here tells one
-person from another.
+Nothing. getjpm.sh keeps no count, log or record of its own. The home page shows two of GitHub's
+own download counts of jpm's release files, over every release:
 
-The release files' download counts on GitHub are the other number: the installers fetch the
-binary from there. `jpm run installs` prints both: the script counts through `wrangler d1 execute`
-with your own wrangler login, GitHub's with no login at all.
+- **Installs**: downloads of `SHA256SUMS` and of `jpm_*.deb`. `install.sh` and `install.ps1`
+  download the release's `SHA256SUMS` once a run to check the binary, and `apt` downloads a
+  `.deb` (`/apt/` redirects there), so these are installs through the scripts and apt. Someone
+  checking a release by hand adds one too.
+- **Binary downloads**: downloads of the release files named `jpm-*`, from the installers, the
+  release page and any other tool.
 
-The home page shows both, in public, near the bottom: the install scripts handed out since
-getjpm.sh launched, and the downloads of the jpm binary (release files named `jpm-*`) from GitHub,
-with the paragraph above in plain words next to them. The page fetches them in the browser from
-`GET /api/installs` (`functions/api/installs.js`), which answers
-`{ "scripts": n, "scripts30d": n, "binaryDownloads": n, "updated": "<ISO time>" }`:
+An install script fetched from getjpm.sh is not counted: most fetches are people and tools
+reading the script, link previews and crawlers, not installs.
 
-- `scripts` and `scripts30d` are the table's total, all told and over the last 30 days, read
-  through the same D1 binding: the site holds no API token or other credential for them.
-- `binaryDownloads` is the sum of `download_count` over every release's `jpm-*` files, from
-  GitHub's API without a token. Zero means there is no release yet, and the page says so.
-- Any of them is `null` when its source is missing or fails, and the page shows a dash for it
-  (and only the explanation when the counts all are). No upstream error text or header is passed on.
+The page fetches the numbers in the browser from `GET /api/installs` (`functions/api/installs.js`),
+which answers `{ "installs": n, "binaryDownloads": n, "updated": "<ISO time>" }`:
+
+- Both come from one read of GitHub's API without a token. Zero binary downloads means there is
+  no release yet, and the page says so.
+- Both are `null` when GitHub fails, and the page shows a dash (and only the explanation when
+  both are). No upstream error text or header is passed on.
 - The answer is cached at the edge with the Cache API for an hour (`Cache-Control: public,
-  max-age=3600`), keyed on the URL without its query string, so visitors cause at most one read of
-  each source an hour per Cloudflare data center. When a source failed, the answer is cached
-  for five minutes instead, so the count comes back soon after the source does.
-- A request for `/api/installs` is not counted: only the install scripts are, as above. Showing
-  the count reads nothing about the visitor either.
+  max-age=3600`), keyed on the URL without its query string, so visitors cause at most one read
+  of GitHub an hour per Cloudflare data center. When GitHub failed, the answer is cached for five
+  minutes instead.
+- Showing the count reads nothing about the visitor.
+
+`jpm run installs` prints the same counts per release and file.
 
 ## License
 

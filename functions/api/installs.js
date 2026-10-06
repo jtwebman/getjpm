@@ -1,22 +1,21 @@
 // GET /api/installs: the public install count the home page shows, as JSON.
 //
-//   { "scripts": 1234, "scripts30d": 123, "binaryDownloads": 45, "updated": "2026-10-01T12:00:00.000Z" }
+//   { "installs": 12, "binaryDownloads": 45, "updated": "2026-10-01T12:00:00.000Z" }
 //
-// - scripts, scripts30d: install scripts getjpm.sh handed out, all told and in the last 30 days,
-//   from the D1 table functions/_middleware.js counts into (wrangler.toml's DB). Read through the
-//   binding: no API token. Null without the binding or on any error.
-// - binaryDownloads: GitHub's download count for jpm's release files named jpm-*; null on error.
+// Both are GitHub's own download counts of jpm's release files, over every release:
+// - installs: downloads of SHA256SUMS, which install.sh and install.ps1 fetch once a run to check
+//   the binary, and of jpm_*.deb, which apt fetches (getjpm.sh/apt redirects there).
+// - binaryDownloads: downloads of the release files named jpm-*, from the installers, the release
+//   page and anything else.
+// getjpm.sh counts nothing itself. Either is null on any error.
 //
 // The answer is cached at the edge for an hour (Cache API, keyed on the URL without its query),
-// so visitors start at most one pair of reads an hour per data center. Nothing from upstream is
+// so visitors start at most one read of GitHub an hour per data center. Nothing from upstream is
 // passed through: no error text, no headers.
 
-export const COUNTS_SQL = `SELECT COALESCE(SUM(count), 0) AS total,
-  COALESCE(SUM(CASE WHEN day >= ?1 THEN count ELSE 0 END), 0) AS recent
-  FROM installs`;
 export const RELEASES_URL = 'https://api.github.com/repos/jtwebman/jpm/releases?per_page=100';
 export const MAX_AGE = 3600;
-// When a source failed, try again sooner than an hour, still without asking upstream per visit.
+// When GitHub failed, try again sooner than an hour, still without asking it per visit.
 export const RETRY_AGE = 300;
 
 const count = (n) => {
@@ -24,53 +23,45 @@ const count = (n) => {
   return Number.isFinite(v) && v >= 0 ? Math.round(v) : null;
 };
 
-/**
- * Install scripts handed out, all told and in the 30 days up to `now`, or nulls.
- * @param {{ DB?: D1Database }} env
- * @param {Date} now
- */
-export async function scriptCounts(env, now) {
-  if (!env.DB) return { scripts: null, scripts30d: null };
-  try {
-    const since = new Date(now.getTime() - 29 * 86_400_000).toISOString().slice(0, 10);
-    const row = await env.DB.prepare(COUNTS_SQL).bind(since).first();
-    return { scripts: count(row?.total), scripts30d: count(row?.recent) };
-  } catch {
-    return { scripts: null, scripts30d: null };
-  }
-}
+const isInstall = (name) => name === 'SHA256SUMS' || /^jpm_.*\.deb$/.test(name);
 
 /**
- * Downloads of jpm's binaries (release files named jpm-*), over every release, or null.
+ * Installs (SHA256SUMS and .deb downloads) and binary downloads (jpm-* files), over every release,
+ * or nulls.
  * @param {typeof fetch} fetchImpl
  */
-export async function binaryDownloads(fetchImpl = fetch) {
+export async function releaseCounts(fetchImpl = fetch) {
+  const none = { installs: null, binaryDownloads: null };
   try {
     const res = await fetchImpl(RELEASES_URL, {
       headers: { accept: 'application/vnd.github+json', 'user-agent': 'getjpm.sh' },
     });
-    if (!res.ok) return null;
+    if (!res.ok) return none;
     const releases = await res.json();
-    if (!Array.isArray(releases)) return null;
-    let sum = 0;
+    if (!Array.isArray(releases)) return none;
+    let installs = 0;
+    let binaryDownloads = 0;
     for (const release of releases) {
       for (const asset of release?.assets ?? []) {
-        if (typeof asset?.name === 'string' && asset.name.startsWith('jpm-')) sum += count(asset.download_count) ?? 0;
+        if (typeof asset?.name !== 'string') continue;
+        const n = count(asset.download_count) ?? 0;
+        if (isInstall(asset.name)) installs += n;
+        else if (asset.name.startsWith('jpm-')) binaryDownloads += n;
       }
     }
-    return sum;
+    return { installs, binaryDownloads };
   } catch {
-    return null;
+    return none;
   }
 }
 
 /**
  * The request handler, apart from Pages.
  * @param {Request} request
- * @param {object} env
+ * @param {object} _env
  * @param {{ fetchImpl?: typeof fetch, cache?: Cache, waitUntil?: (p: Promise<unknown>) => void, now?: () => Date }} [deps]
  */
-export async function handleInstalls(request, env, deps = {}) {
+export async function handleInstalls(request, _env, deps = {}) {
   const { fetchImpl = fetch, cache = globalThis.caches?.default, waitUntil, now = () => new Date() } = deps;
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return new Response('Method Not Allowed\n', { status: 405, headers: { allow: 'GET, HEAD', 'content-type': 'text/plain; charset=utf-8' } });
@@ -88,9 +79,9 @@ export async function handleInstalls(request, env, deps = {}) {
   }
 
   const at = now();
-  const [scripts, binaries] = await Promise.all([scriptCounts(env, at), binaryDownloads(fetchImpl)]);
-  const body = JSON.stringify({ ...scripts, binaryDownloads: binaries, updated: at.toISOString() });
-  const maxAge = scripts.scripts === null || binaries === null ? RETRY_AGE : MAX_AGE;
+  const counts = await releaseCounts(fetchImpl);
+  const body = JSON.stringify({ ...counts, updated: at.toISOString() });
+  const maxAge = counts.installs === null ? RETRY_AGE : MAX_AGE;
   const response = new Response(body, {
     headers: {
       'content-type': 'application/json; charset=utf-8',

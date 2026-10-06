@@ -2,14 +2,3 @@
 name = "getjpm"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-09-01"
-
-# Install-script counts: functions/_middleware.js adds one to a row per day, script and path for
-# each install.sh or install.ps1 handed out; functions/api/installs.js reads the totals the home
-# page shows. Both go through this binding, so no API token is needed or kept anywhere.
-# The table is migrations/0001_installs.sql:
-#   jpx wrangler@4.145.0 d1 migrations apply getjpm --remote
-[[d1_databases]]
-binding = "DB"
-database_name = "getjpm"
-database_id = "f22c8ee7-d16c-47a2-9d1c-d91ba4416851"
-migrations_dir = "migrations"
