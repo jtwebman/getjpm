@@ -89,7 +89,7 @@ test('the answer is cached: one read of GitHub, whatever the query string', asyn
   assert.equal(second, first);
   assert.equal(busted, first);
   assert.equal(up.calls.length, 1);
-  assert.deepEqual([...cache.store.keys()], ['https://getjpm.sh/api/installs']);
+  assert.deepEqual([...cache.store.keys()], ['https://getjpm.sh/api/installs?shape=installs-v2']);
 });
 
 test('a cache that throws is a miss, not an error', async () => {

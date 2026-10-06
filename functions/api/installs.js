@@ -17,6 +17,7 @@ export const RELEASES_URL = 'https://api.github.com/repos/jtwebman/jpm/releases?
 export const MAX_AGE = 3600;
 // When GitHub failed, try again sooner than an hour, still without asking it per visit.
 export const RETRY_AGE = 300;
+export const CACHE_SHAPE = 'installs-v2';
 
 const count = (n) => {
   const v = Number(n);
@@ -66,9 +67,10 @@ export async function handleInstalls(request, _env, deps = {}) {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return new Response('Method Not Allowed\n', { status: 405, headers: { allow: 'GET, HEAD', 'content-type': 'text/plain; charset=utf-8' } });
   }
-  // One cache entry, whatever the query string: ?anything cannot force a fresh read.
+  // One cache entry, whatever the query string: ?anything cannot force a fresh read. The key
+  // names the answer's shape, so a deploy that changes it never serves the old one.
   const url = new URL(request.url);
-  const key = new Request(`${url.origin}${url.pathname}`, { method: 'GET' });
+  const key = new Request(`${url.origin}${url.pathname}?shape=${CACHE_SHAPE}`, { method: 'GET' });
   const head = (res) => (request.method === 'HEAD' ? new Response(null, res) : res);
 
   try {
