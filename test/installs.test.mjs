@@ -125,3 +125,14 @@ test('HEAD has the headers and no body; other methods are refused', async () => 
   assert.equal(post.status, 405);
   assert.equal(up.calls.length, 0);
 });
+
+test('sends GITHUB_TOKEN to GitHub when set, and nothing when not', async () => {
+  const seen = [];
+  const fetchImpl = async (_url, init) => {
+    seen.push(init.headers.authorization);
+    return Response.json(RELEASES);
+  };
+  await handleInstalls(req(), { GITHUB_TOKEN: 't0k' }, { fetchImpl, cache: undefined, now: NOW });
+  await handleInstalls(req(), {}, { fetchImpl, cache: undefined, now: NOW });
+  assert.deepEqual(seen, ['Bearer t0k', undefined]);
+});

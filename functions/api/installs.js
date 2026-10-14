@@ -9,6 +9,11 @@
 // The answer is cached at the edge for an hour (Cache API, keyed on the URL without its query),
 // so visitors start at most one read of GitHub an hour per data center. Nothing from upstream is
 // passed through: no error text, no headers.
+//
+// Without a token GitHub allows 60 reads an hour per IP, and Cloudflare's egress IPs are shared
+// with everyone else's Workers, so that budget is usually gone. Set the GITHUB_TOKEN secret (a
+// fine-grained token with no permissions is enough to read a public repo) for 5,000 an hour:
+//   jpx wrangler pages secret put GITHUB_TOKEN --project-name getjpm
 
 export const RELEASES_URL = 'https://api.github.com/repos/jtwebman/jpm/releases?per_page=100';
 export const MAX_AGE = 3600;
@@ -26,14 +31,18 @@ const isInstall = (name) => name === 'SHA256SUMS' || /^jpm_.*\.deb$/.test(name);
 /**
  * Installs (SHA256SUMS and .deb downloads) over every release, or null.
  * @param {typeof fetch} fetchImpl
+ * @param {string} [token] GitHub token, for its own rate limit instead of the shared IP's.
  */
-export async function releaseCounts(fetchImpl = fetch) {
+export async function releaseCounts(fetchImpl = fetch, token) {
   const none = { installs: null };
   try {
-    const res = await fetchImpl(RELEASES_URL, {
-      headers: { accept: 'application/vnd.github+json', 'user-agent': 'getjpm.sh' },
-    });
-    if (!res.ok) return none;
+    const headers = { accept: 'application/vnd.github+json', 'user-agent': 'getjpm.sh' };
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await fetchImpl(RELEASES_URL, { headers });
+    if (!res.ok) {
+      console.log(`GitHub releases: ${res.status}, rate limit remaining ${res.headers.get('x-ratelimit-remaining')}`);
+      return none;
+    }
     const releases = await res.json();
     if (!Array.isArray(releases)) return none;
     let installs = 0;
@@ -51,10 +60,10 @@ export async function releaseCounts(fetchImpl = fetch) {
 /**
  * The request handler, apart from Pages.
  * @param {Request} request
- * @param {object} _env
+ * @param {{ GITHUB_TOKEN?: string }} env
  * @param {{ fetchImpl?: typeof fetch, cache?: Cache, waitUntil?: (p: Promise<unknown>) => void, now?: () => Date }} [deps]
  */
-export async function handleInstalls(request, _env, deps = {}) {
+export async function handleInstalls(request, env, deps = {}) {
   const { fetchImpl = fetch, cache = globalThis.caches?.default, waitUntil, now = () => new Date() } = deps;
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return new Response('Method Not Allowed\n', { status: 405, headers: { allow: 'GET, HEAD', 'content-type': 'text/plain; charset=utf-8' } });
@@ -73,7 +82,7 @@ export async function handleInstalls(request, _env, deps = {}) {
   }
 
   const at = now();
-  const counts = await releaseCounts(fetchImpl);
+  const counts = await releaseCounts(fetchImpl, env?.GITHUB_TOKEN);
   const body = JSON.stringify({ ...counts, updated: at.toISOString() });
   const maxAge = counts.installs === null ? RETRY_AGE : MAX_AGE;
   const response = new Response(body, {
