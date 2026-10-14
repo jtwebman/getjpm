@@ -5,7 +5,10 @@
 //   not ask for HTML), so `curl -fsSL https://getjpm.sh | sh` works; a browser gets the page.
 //   PowerShell gets install.ps1 there, so `irm https://getjpm.sh | iex` works too.
 // - /apt/ is jpm's apt repository (serveApt).
-// - Everything else is the static site.
+// - Everything else is the static site. Its HTML is sent with Cache-Control no-transform, so
+//   Cloudflare's zone features leave it alone: Email Obfuscation took package names such as
+//   debug@4.3.4 for addresses and broke the storage diagram, and the Web Analytics beacon it
+//   injected was blocked by the page's CSP anyway.
 //
 // The scripts are not copied into this repository: they are fetched from jpm's own repository,
 // so the site always serves what jpm's main branch has, cached at the edge for five minutes.
@@ -131,6 +134,20 @@ export async function serveApt(pathname, request, fetchImpl = fetch) {
 }
 
 /**
+ * A static page as served, with no-transform added to an HTML response's Cache-Control.
+ * @param {Response} page
+ */
+function untransformed(page) {
+  // Copied either way: the site's own response has immutable headers, and `/` adds Vary to it,
+  // even to a 304 with no content-type.
+  const response = new Response(page.body, page);
+  if (!page.headers.get('content-type')?.startsWith('text/html')) return response;
+  const cache = page.headers.get('cache-control');
+  response.headers.set('cache-control', cache ? `${cache}, no-transform` : 'no-transform');
+  return response;
+}
+
+/**
  * The request handler, apart from Pages: `next` serves the static site.
  * @param {Request} request
  * @param {() => Promise<Response>} next
@@ -149,13 +166,12 @@ export async function handle(request, next, fetchImpl = fetch) {
     const script = installerFor(request);
     if (script) return served(script);
     // The page varies by these headers too, so a shared cache never hands it to curl.
-    const page = await next();
-    const response = new Response(page.body, page);
+    const response = untransformed(await next());
     response.headers.set('vary', 'User-Agent, Accept');
     return response;
   }
 
-  return next();
+  return untransformed(await next());
 }
 
 /** @type {PagesFunction} */

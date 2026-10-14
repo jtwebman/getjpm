@@ -1,0 +1,21 @@
+---
+// Any path the site doesn't have. Without this page, Cloudflare Pages answers every unknown path
+// with the home page and a 200.
+import Base from '../layouts/Base.astro';
+import { defaultLocale } from '../i18n';
+---
+
+<Base locale={defaultLocale} page="404" translated={false} title="Page not found · jpm" description="This page does not exist.">
+  <section class="container missing">
+    <h1 class="section-title">Page not found</h1>
+    <p class="lead">There is nothing at this address. <a href="/">Go to the home page</a>.</p>
+  </section>
+</Base>
+
+<style>
+  @layer components {
+    .missing {
+      padding-block: var(--size-fluid-7);
+    }
+  }
+</style>

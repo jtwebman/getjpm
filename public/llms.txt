@@ -1,0 +1,23 @@
+# jpm
+
+> jpm is a fast, small, secure-by-default package manager for JavaScript, written in Rust. It is one ~2 MB binary for Linux, macOS and Windows. It installs npm, pnpm, yarn and bun projects and keeps the versions in their lockfiles. Dependencies' install scripts are off, and new versions are held back a day, by default.
+
+Install on macOS and Linux with `curl -fsSL https://getjpm.sh | sh`, on Windows with `irm https://getjpm.sh/install.ps1 | iex`. Then run `jpm install` in a project.
+
+## Docs
+
+- [Install](https://github.com/jtwebman/jpm/blob/main/docs/install.md): install scripts, apt, and other ways to get jpm
+- [Usage](https://github.com/jtwebman/jpm/blob/main/docs/usage.md): every command
+- [Migrating](https://github.com/jtwebman/jpm/blob/main/docs/migrating.md): moving a project from npm, pnpm, yarn or bun
+- [Configuration](https://github.com/jtwebman/jpm/blob/main/docs/configuration.md): settings and environment variables
+- [Install scripts](https://github.com/jtwebman/jpm/blob/main/docs/install-scripts.md): which dependencies may run scripts, and how to allow them
+- [Lockfile](https://github.com/jtwebman/jpm/blob/main/docs/lockfile.md): the jpm.lock format
+- [How it works](https://github.com/jtwebman/jpm/blob/main/docs/how-it-works.md): the store, linking and resolution
+- [Benchmarks](https://github.com/jtwebman/jpm/blob/main/docs/benchmarks.md): jpm against npm, pnpm, yarn and bun
+
+## Project
+
+- [Source code](https://github.com/jtwebman/jpm): MIT license
+- [Releases](https://github.com/jtwebman/jpm/releases)
+- [Issues](https://github.com/jtwebman/jpm/issues)
+- [Blog](https://getjpm.sh/blog/)

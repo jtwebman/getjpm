@@ -111,6 +111,16 @@ test('other paths and methods pass through to the site', async () => {
   assert.equal(calls.length, 0);
 });
 
+test('HTML is sent no-transform, so Cloudflare does not rewrite it; other files are left alone', async () => {
+  const html = async () => new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=0, must-revalidate' } });
+  const page = await handle(req('/blog/', BROWSER), html);
+  assert.equal(page.headers.get('cache-control'), 'public, max-age=0, must-revalidate, no-transform');
+  const home = await handle(req('/', BROWSER), next);
+  assert.equal(home.headers.get('cache-control'), 'no-transform');
+  const svg = async () => new Response('<svg/>', { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=60' } });
+  assert.equal((await handle(req('/favicon.svg'), svg)).headers.get('cache-control'), 'public, max-age=60');
+});
+
 test('installerFor', () => {
   const r = (headers) => installerFor(new Request('https://getjpm.sh/', { headers }));
   assert.equal(r({ 'user-agent': 'curl/7.81.0', accept: 'text/html' }), 'install.sh');
