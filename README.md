@@ -21,6 +21,7 @@ analytics, web fonts or CDNs: everything is served from the site.
 | Path | What it is |
 | --- | --- |
 | `src/pages/index.astro`, `src/pages/[locale]/index.astro` | The home page: English at `/`, the other languages at `/zh/`, `/ja/`, … |
+| `src/content/blog/`, `src/pages/blog/` | The blog, English only: one Markdown file per post (its name is the URL), the list at `/blog/` and the feed at `/blog/rss.xml`. `draft: true` shows a post only in `jpm run dev`; the header links the blog once a post is published |
 | `src/layouts/Base.astro` | The shell every page uses: head and meta, `hreflang` links, theme, header and footer |
 | `src/components/` | The header, footer and the home page's sections (`Hero`, `SpeedChart`, `Switch`, `Lean`, `StorageDiagram`, `Security`, `Story`, `Installs`) |
 | `src/data/bench.ts` | The benchmark numbers the charts draw, from jpm's [docs/benchmarks.md](https://github.com/jtwebman/jpm/blob/main/docs/benchmarks.md) |

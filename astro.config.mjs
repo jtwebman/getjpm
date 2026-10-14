@@ -11,7 +11,7 @@ export default defineConfig({
   },
   // Scoped styles as a short class rather than a data attribute on every element.
   scopedStyleStrategy: 'class',
-  // No Markdown pages yet; Shiki's inline styles would not fit the CSP anyway.
+  // Blog posts are Markdown; code blocks stay plain, since Shiki's inline styles would not fit the CSP.
   markdown: { syntaxHighlight: false },
   vite: {
     // Every script in its own cached file, shared by all locales, never inlined in the page.

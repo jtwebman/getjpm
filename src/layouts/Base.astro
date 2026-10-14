@@ -12,34 +12,54 @@ interface Props {
   page?: string;
   title?: string;
   description?: string;
+  /** False for an English-only page (the blog): no translations to link to. */
+  translated?: boolean;
+  /** The link-preview image, a path in public/; og.png if none. */
+  image?: string;
+  /** For a blog post: an article, not the software, to search engines and link previews. */
+  article?: { title: string; published: Date };
 }
 
-const { locale, page = '', title, description } = Astro.props;
+const { locale, page = '', title, description, translated = true, image = '/og.png', article } = Astro.props;
 const t = useTranslations(locale);
 const site = Astro.site ?? new URL('https://getjpm.sh');
 const pageTitle = title ?? t('meta.title');
 const pageDescription = description ?? t('meta.description');
 const canonical = new URL(localeHref(locale, page), site).href;
-const ogImage = new URL('/og.png', site).href;
+const ogImage = new URL(image, site).href;
+const alternates = translated ? locales : [];
 const repo = 'https://github.com/jtwebman/jpm';
-// What search engines show about jpm: free, MIT-licensed developer software, with its source and
-// where to get it. A data block, never run, so the page's script policy does not apply to it.
-const structured = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'jpm',
-  description: pageDescription,
-  url: site.href,
-  image: ogImage,
-  applicationCategory: 'DeveloperApplication',
-  operatingSystem: 'Linux, macOS, Windows',
-  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  license: 'https://opensource.org/licenses/MIT',
-  downloadUrl: `${repo}/releases/latest`,
-  sameAs: [repo],
-  author: { '@type': 'Person', name: 'JT Turner', url: 'https://github.com/jtwebman' },
-  inLanguage: locale.code,
-};
+// What search engines show: for a blog post, the article; otherwise jpm as free, MIT-licensed
+// developer software, with its source and where to get it. A data block, never run, so the
+// page's script policy does not apply to it.
+const structured = article
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: article.title,
+      description: pageDescription,
+      url: canonical,
+      image: ogImage,
+      datePublished: article.published.toISOString(),
+      author: { '@type': 'Person', name: 'JT Turner', url: 'https://github.com/jtwebman' },
+      inLanguage: locale.code,
+    }
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'jpm',
+      description: pageDescription,
+      url: site.href,
+      image: ogImage,
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'Linux, macOS, Windows',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      license: 'https://opensource.org/licenses/MIT',
+      downloadUrl: `${repo}/releases/latest`,
+      sameAs: [repo],
+      author: { '@type': 'Person', name: 'JT Turner', url: 'https://github.com/jtwebman' },
+      inLanguage: locale.code,
+    };
 ---
 
 <!doctype html>
@@ -50,8 +70,9 @@ const structured = {
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
     <link rel="canonical" href={canonical} />
-    {locales.map((l) => <link rel="alternate" hreflang={l.code} href={new URL(localeHref(l, page), site).href} />)}
-    <link rel="alternate" hreflang="x-default" href={new URL(localeHref(locales[0], page), site).href} />
+    {alternates.map((l) => <link rel="alternate" hreflang={l.code} href={new URL(localeHref(l, page), site).href} />)}
+    {translated && <link rel="alternate" hreflang="x-default" href={new URL(localeHref(locales[0], page), site).href} />}
+    <link rel="alternate" type="application/rss+xml" title="jpm blog" href="/blog/rss.xml" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -60,7 +81,8 @@ const structured = {
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0d0f12" media="(prefers-color-scheme: dark)" />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    {article && <meta property="article:published_time" content={article.published.toISOString()} />}
     <meta property="og:site_name" content="jpm" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDescription} />
@@ -70,7 +92,7 @@ const structured = {
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="jpm: fast, small, secure by default" />
     <meta property="og:locale" content={locale.og} />
-    {locales.filter((l) => l !== locale).map((l) => <meta property="og:locale:alternate" content={l.og} />)}
+    {alternates.filter((l) => l !== locale).map((l) => <meta property="og:locale:alternate" content={l.og} />)}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDescription} />
@@ -87,7 +109,7 @@ const structured = {
   </head>
   <body>
     <a class="skip-link" href="#main">{t('nav.skip')}</a>
-    <Header locale={locale} page={page} />
+    <Header locale={locale} page={translated ? page : ''} />
     <main id="main" tabindex="-1">
       <slot />
     </main>

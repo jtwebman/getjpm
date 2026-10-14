@@ -1,8 +1,10 @@
 ---
 // The sticky top bar: mark, section links (a menu on narrow screens), language menu, theme
-// toggle and GitHub. More pages (Docs, Blog) add entries to `links`.
+// toggle and GitHub. More pages (Docs) add entries to `links`. The language menu links to the
+// same page in each language, or to each home page from an English-only page (page '').
 import Logo from './Logo.astro';
 import { locales, localeHref, repo, useTranslations, type Locale } from '../i18n';
+import { posts } from '../blog';
 
 interface Props {
   locale: Locale;
@@ -19,6 +21,8 @@ const links = [
   { href: `${home}#security`, label: t('nav.security') },
   { href: `${home}#story`, label: t('nav.story') },
 ];
+// The blog is English only, and linked once it has a post.
+if ((await posts()).length) links.push({ href: '/blog/', label: t('nav.blog') });
 ---
 
 <header class="site-header">
