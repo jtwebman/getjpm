@@ -52,7 +52,7 @@ test('installs are SHA256SUMS and .deb downloads', async () => {
   const res = await run(upstream());
   assert.equal(res.status, 200);
   assert.equal(res.headers.get('content-type'), 'application/json; charset=utf-8');
-  assert.equal(res.headers.get('cache-control'), 'public, max-age=3600');
+  assert.equal(res.headers.get('cache-control'), 'public, max-age=60');
   // Neither the binaries nor install.sh from the release page: running the script fetches SHA256SUMS.
   assert.deepEqual(await res.json(), { installs: 42, updated: '2026-10-01T12:00:00.000Z' });
 });
@@ -62,13 +62,47 @@ test('no releases are zero installs', async () => {
   assert.deepEqual(await res.json(), { installs: 0, updated: '2026-10-01T12:00:00.000Z' });
 });
 
-test('GitHub failing gives null, and a shorter cache', async () => {
+test('GitHub failing, with nothing saved, gives null', async () => {
   for (const github of [403, 500, 'throw', { message: 'not a list' }]) {
     const res = await run(upstream({ github }));
-    const body = await res.json();
-    assert.equal(body.installs, null, String(github));
-    assert.equal(res.headers.get('cache-control'), 'public, max-age=300');
+    assert.equal((await res.json()).installs, null, String(github));
   }
+});
+
+/** A KV namespace, in memory. */
+function memoryKV() {
+  const store = new Map();
+  return {
+    store,
+    get: async (key) => (store.has(key) ? JSON.parse(store.get(key)) : null),
+    put: async (key, value) => {
+      store.set(key, value);
+    },
+  };
+}
+
+test('KV: GitHub is asked once per 10 minutes across data centers, and a failure keeps the last count', async () => {
+  const INSTALLS = memoryKV();
+  let github = RELEASES;
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls++;
+    return typeof github === 'number' ? new Response('', { status: github }) : Response.json(github);
+  };
+  // Each call has its own empty cache, as a request in another data center would.
+  const at = (min) => async () => (await handleInstalls(req(), { INSTALLS }, { fetchImpl, cache: memoryCache(), now: () => new Date(Date.UTC(2026, 9, 1, 12, min)) })).json();
+
+  assert.deepEqual(await at(0)(), { installs: 42, updated: '2026-10-01T12:00:00.000Z' });
+  github = 403;
+  assert.equal((await at(9)()).installs, 42);
+  assert.equal(calls, 1);
+  assert.deepEqual(await at(10)(), { installs: 42, updated: '2026-10-01T12:00:00.000Z' });
+  assert.equal(calls, 2);
+  assert.equal((await at(19)()).installs, 42);
+  assert.equal(calls, 2);
+  github = RELEASES;
+  assert.deepEqual(await at(20)(), { installs: 42, updated: '2026-10-01T12:20:00.000Z' });
+  assert.equal(calls, 3);
 });
 
 test('nothing from upstream reaches the response: only the two fields', async () => {
@@ -88,7 +122,7 @@ test('the answer is cached: one read of GitHub, whatever the query string', asyn
   assert.equal(second, first);
   assert.equal(busted, first);
   assert.equal(up.calls.length, 1);
-  assert.deepEqual([...cache.store.keys()], ['https://getjpm.sh/api/installs?shape=installs-v3']);
+  assert.deepEqual([...cache.store.keys()], ['https://getjpm.sh/api/installs?shape=installs-v4']);
 });
 
 test('a cache that throws is a miss, not an error', async () => {

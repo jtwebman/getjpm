@@ -2,3 +2,8 @@
 name = "getjpm"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-09-01"
+
+# The install count and when GitHub was last asked (functions/api/installs.js).
+[[kv_namespaces]]
+binding = "INSTALLS"
+id = "2d2d7d3df89e44f69b2a2289190a414e"
