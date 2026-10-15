@@ -1,7 +1,7 @@
 ---
 // The sticky top bar: mark, section links (a menu on narrow screens), language menu, theme
 // toggle and GitHub. More pages (Docs) add entries to `links`. The language menu links to the
-// same page in each language, or to each home page from an English-only page (page '').
+// same page in each language it exists in, and to the home page in the others.
 import Logo from './Logo.astro';
 import { locales, localeHref, repo, useTranslations, type Locale } from '../i18n';
 import { posts } from '../blog';
@@ -9,8 +9,9 @@ import { posts } from '../blog';
 interface Props {
   locale: Locale;
   page: string;
+  alternates: Locale[];
 }
-const { locale, page } = Astro.props;
+const { locale, page, alternates } = Astro.props;
 const t = useTranslations(locale);
 const home = localeHref(locale);
 const links = [
@@ -21,8 +22,9 @@ const links = [
   { href: `${home}#security`, label: t('nav.security') },
   { href: `${home}#story`, label: t('nav.story') },
 ];
-// The blog is English only, and linked once it has a post.
-if ((await posts()).length) links.push({ href: '/blog/', label: t('nav.blog') });
+// The blog, once it has a post: in this language if translated, else in English.
+const blogIn = (await posts(locale)).length ? locale : (await posts()).length ? locales[0] : null;
+if (blogIn) links.push({ href: localeHref(blogIn, 'blog/'), label: t('nav.blog') });
 ---
 
 <header class="site-header">
@@ -52,7 +54,7 @@ if ((await posts()).length) links.push({ href: '/blog/', label: t('nav.blog') })
             {
               locales.map((l) => (
                 <li>
-                  <a href={localeHref(l, page)} hreflang={l.code} lang={l.code} aria-current={l.code === locale.code ? 'true' : undefined}>
+                  <a href={localeHref(l, alternates.includes(l) ? page : '')} hreflang={l.code} lang={l.code} aria-current={l.code === locale.code ? 'true' : undefined}>
                     {l.name}
                   </a>
                 </li>

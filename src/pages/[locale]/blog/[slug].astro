@@ -1,0 +1,16 @@
+---
+// A post's translations, at /ja/blog/<slug>/, …
+import BlogPost from '../../../components/BlogPost.astro';
+import { locales } from '../../../i18n';
+import { posts, slugOf } from '../../../blog';
+
+export async function getStaticPaths() {
+  const paths = [];
+  for (const locale of locales.filter((l) => l.path)) {
+    for (const post of await posts(locale)) paths.push({ params: { locale: locale.path, slug: slugOf(post) }, props: { locale, post } });
+  }
+  return paths;
+}
+---
+
+<BlogPost locale={Astro.props.locale} post={Astro.props.post} />

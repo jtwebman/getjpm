@@ -1,13 +1,14 @@
-// The blog's RSS feed, for feed readers and aggregators such as daily.dev.
+// The blog's RSS feed, English posts only, for feed readers and aggregators such as daily.dev.
 import type { APIRoute } from 'astro';
-import { posts, postHref } from '../../blog';
+import { defaultLocale } from '../../i18n';
+import { posts, postHref, slugOf } from '../../blog';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 export const GET: APIRoute = async ({ site }) => {
   const base = site ?? new URL('https://getjpm.sh');
   const items = (await posts()).map((p) => {
-    const url = new URL(postHref(p.id), base).href;
+    const url = new URL(postHref(defaultLocale, slugOf(p)), base).href;
     return `    <item>
       <title>${esc(p.data.title)}</title>
       <link>${url}</link>

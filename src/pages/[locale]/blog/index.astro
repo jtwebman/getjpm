@@ -1,0 +1,12 @@
+---
+// The blog in every language that has a post, but English.
+import BlogIndex from '../../../components/BlogIndex.astro';
+import { localeByPath } from '../../../i18n';
+import { blogLocales } from '../../../blog';
+
+export async function getStaticPaths() {
+  return (await blogLocales()).filter((l) => l.path).map((l) => ({ params: { locale: l.path } }));
+}
+---
+
+<BlogIndex locale={localeByPath(Astro.params.locale)} />

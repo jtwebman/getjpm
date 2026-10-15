@@ -1,0 +1,69 @@
+---
+// The blog's list of posts in one language, at /blog/ and /ja/blog/, …
+import Base from '../layouts/Base.astro';
+import { defaultLocale, useTranslations, type Locale } from '../i18n';
+import { posts, postHref, slugOf, formatDate, blogLocales } from '../blog';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const list = await posts(locale);
+---
+
+<Base locale={locale} page="blog/" alternates={await blogLocales()} title={`${t('nav.blog')} · jpm`} description={t('blog.description')}>
+  <section class="container blog">
+    <h1 class="section-title">{t('nav.blog')}</h1>
+    {locale === defaultLocale && <p class="note"><a href="/blog/rss.xml">RSS feed</a></p>}
+    {list.length === 0 && <p>{t('blog.empty')}</p>}
+    <ol>
+      {
+        list.map((p) => (
+          <li>
+            <time datetime={p.data.date.toISOString().slice(0, 10)}>{formatDate(p.data.date, locale)}</time>
+            <h2>
+              <a href={postHref(locale, slugOf(p))}>{p.data.title}</a>
+            </h2>
+            <p>{p.data.description}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+</Base>
+
+<style>
+  @layer components {
+    .blog {
+      max-inline-size: 46rem;
+      padding-block: var(--size-fluid-5);
+    }
+    ol {
+      list-style: none;
+      padding: 0;
+      margin-block-start: var(--size-7);
+      display: grid;
+      gap: var(--size-7);
+    }
+    time {
+      font-size: var(--font-size-0);
+      color: var(--text-2);
+    }
+    h2 {
+      font-size: var(--font-size-4);
+      margin-block: var(--size-1) var(--size-2);
+      & a {
+        color: var(--text-1);
+        text-decoration: none;
+        &:hover {
+          color: var(--link);
+          text-decoration: underline;
+        }
+      }
+    }
+    li p {
+      color: var(--text-2);
+    }
+  }
+</style>

@@ -12,22 +12,22 @@ interface Props {
   page?: string;
   title?: string;
   description?: string;
-  /** False for an English-only page (the blog): no translations to link to. */
-  translated?: boolean;
+  /** The languages this page exists in, for hreflang and the language menu; every one if not
+   * given. A blog post lists its translations; the 404 page lists none. */
+  alternates?: Locale[];
   /** The link-preview image, a path in public/; og.png if none. */
   image?: string;
   /** For a blog post: an article, not the software, to search engines and link previews. */
   article?: { title: string; published: Date };
 }
 
-const { locale, page = '', title, description, translated = true, image = '/og.png', article } = Astro.props;
+const { locale, page = '', title, description, alternates = locales, image = '/og.png', article } = Astro.props;
 const t = useTranslations(locale);
 const site = Astro.site ?? new URL('https://getjpm.sh');
 const pageTitle = title ?? t('meta.title');
 const pageDescription = description ?? t('meta.description');
 const canonical = new URL(localeHref(locale, page), site).href;
 const ogImage = new URL(image, site).href;
-const alternates = translated ? locales : [];
 const repo = 'https://github.com/jtwebman/jpm';
 // What search engines show: for a blog post, the article; otherwise jpm as free, MIT-licensed
 // developer software, with its source and where to get it. A data block, never run, so the
@@ -71,7 +71,7 @@ const structured = article
     <meta name="description" content={pageDescription} />
     <link rel="canonical" href={canonical} />
     {alternates.map((l) => <link rel="alternate" hreflang={l.code} href={new URL(localeHref(l, page), site).href} />)}
-    {translated && <link rel="alternate" hreflang="x-default" href={new URL(localeHref(locales[0], page), site).href} />}
+    {alternates.includes(locales[0]) && <link rel="alternate" hreflang="x-default" href={new URL(localeHref(locales[0], page), site).href} />}
     <link rel="alternate" type="application/rss+xml" title="jpm blog" href="/blog/rss.xml" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -109,7 +109,7 @@ const structured = article
   </head>
   <body>
     <a class="skip-link" href="#main">{t('nav.skip')}</a>
-    <Header locale={locale} page={translated ? page : ''} />
+    <Header locale={locale} page={page} alternates={alternates} />
     <main id="main" tabindex="-1">
       <slot />
     </main>

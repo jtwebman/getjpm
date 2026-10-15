@@ -1,0 +1,117 @@
+---
+// One blog post in one language. A translation says so at the top and links the English original.
+import { render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import { defaultLocale, link, localeHref, useTranslations, type Locale } from '../i18n';
+import { formatDate, postHref, slugOf, translations, type Post } from '../blog';
+
+interface Props {
+  locale: Locale;
+  post: Post;
+}
+const { locale, post } = Astro.props;
+const t = useTranslations(locale);
+const slug = slugOf(post);
+const { Content } = await render(post);
+const { title, description, date, image } = post.data;
+const original = locale !== defaultLocale && link(postHref(defaultLocale, slug), t('blog.original'));
+---
+
+<Base
+  locale={locale}
+  page={`blog/${slug}/`}
+  alternates={await translations(slug)}
+  title={`${title} · jpm`}
+  description={description}
+  image={image}
+  article={{ title, published: date }}
+>
+  <article class="container post">
+    <header>
+      <h1>{title}</h1>
+      <p class="note byline"><a href={localeHref(locale, 'blog/')}>{t('nav.blog')}</a> · <time datetime={date.toISOString().slice(0, 10)}>{formatDate(date, locale)}</time> · JT Turner</p>
+      {original && <p class="note translated" set:html={t('blog.translated', { link: original })} />}
+    </header>
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  @layer components {
+    .post {
+      max-inline-size: 46rem;
+      padding-block: var(--size-fluid-5) var(--size-fluid-6);
+    }
+    header {
+      margin-block-end: var(--size-9);
+    }
+    h1 {
+      font-size: var(--font-size-fluid-3);
+      letter-spacing: -0.02em;
+      margin-block-end: var(--size-3);
+    }
+    .translated {
+      margin-block-start: var(--size-2);
+      & :global(a) {
+        color: var(--link);
+      }
+    }
+    .prose {
+      font-size: var(--font-size-2);
+      line-height: var(--font-lineheight-4);
+      & :global(> * + *) {
+        margin-block-start: var(--size-4);
+      }
+      & :global(h2) {
+        font-size: var(--font-size-5);
+        margin-block-start: var(--size-8);
+      }
+      & :global(h3) {
+        font-size: var(--font-size-3);
+        margin-block-start: var(--size-6);
+      }
+      & :global(ul),
+      & :global(ol) {
+        padding-inline-start: var(--size-5);
+      }
+      & :global(li + li) {
+        margin-block-start: var(--size-1);
+      }
+      & :global(pre) {
+        background: var(--term-bg);
+        color: var(--term-text);
+        border-radius: var(--radius-3);
+        padding: var(--size-4) var(--size-5);
+        overflow-x: auto;
+        font-size: var(--font-size-0);
+        line-height: var(--font-lineheight-4);
+      }
+      & :global(blockquote) {
+        border-inline-start: 3px solid var(--accent);
+        padding-inline-start: var(--size-4);
+        color: var(--text-2);
+      }
+      & :global(img) {
+        border-radius: var(--radius-3);
+      }
+      & :global(table) {
+        display: block;
+        overflow-x: auto;
+        font-size: var(--font-size-1);
+      }
+      & :global(th),
+      & :global(td) {
+        border: 1px solid var(--border);
+        padding: var(--size-1) var(--size-3);
+        text-align: start;
+      }
+      & :global(hr) {
+        border: 0;
+        border-block-start: 1px solid var(--border);
+        margin-block: var(--size-8);
+      }
+    }
+  }
+</style>
