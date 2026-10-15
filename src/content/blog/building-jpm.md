@@ -1,5 +1,5 @@
 ---
-title: What it took to trust a package manager
+title: "What it took to trust a package manager Claude wrote"
 description: jpm is a 2 MB JavaScript package manager in Rust, written by Claude Code Opus 5.5 in five days. This is how I directed it, and why I trust code I never typed.
 date: 2026-10-14
 image: /blog/speed-chart.png

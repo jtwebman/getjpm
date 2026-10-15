@@ -1,5 +1,5 @@
 ---
-title: O que foi preciso para confiar em um gerenciador de pacotes
+title: "O que foi preciso para confiar em um gerenciador de pacotes escrito pelo Claude"
 description: O jpm é um gerenciador de pacotes para JavaScript de 2 MB em Rust, escrito pelo Claude Code Opus 5.5 em cinco dias. Foi assim que eu o dirigi, e é por isso que confio em código que nunca digitei.
 date: 2026-10-14
 image: /blog/speed-chart.png

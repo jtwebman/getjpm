@@ -1,5 +1,5 @@
 ---
-title: Ce qu'il a fallu pour faire confiance à un gestionnaire de paquets
+title: "Ce qu'il a fallu pour faire confiance à un gestionnaire de paquets écrit par Claude"
 description: jpm est un gestionnaire de paquets JavaScript de 2 MB en Rust, écrit par Claude Code Opus 5.5 en cinq jours. Voici comment je l'ai dirigé, et pourquoi je fais confiance à du code que je n'ai jamais tapé.
 date: 2026-10-14
 image: /blog/speed-chart.png

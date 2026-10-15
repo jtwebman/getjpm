@@ -1,5 +1,5 @@
 ---
-title: "パッケージマネージャーを信頼できるまでに必要だったこと"
+title: "Claude が書いたパッケージマネージャーを信頼できるまでに必要だったこと"
 description: "jpm は Rust で書かれた 2 MB の JavaScript パッケージマネージャーで、Claude Code Opus 5.5 が 5 日間で書いた。僕がどう指揮したのか、そして自分では一行も打っていないコードをなぜ信頼しているのかを書く。"
 date: 2026-10-14
 image: /blog/speed-chart.png

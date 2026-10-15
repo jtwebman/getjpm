@@ -1,5 +1,5 @@
 ---
-title: "Was es gebraucht hat, einem Paketmanager zu vertrauen"
+title: "Was es gebraucht hat, einem Paketmanager zu vertrauen, den Claude geschrieben hat"
 description: "jpm ist ein 2 MB großer Paketmanager für JavaScript in Rust, geschrieben von Claude Code Opus 5.5 in fünf Tagen. So habe ich es gesteuert, und deshalb vertraue ich Code, den ich nie getippt habe."
 date: 2026-10-14
 image: /blog/speed-chart.png

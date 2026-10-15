@@ -1,5 +1,5 @@
 ---
-title: "패키지 매니저를 믿기까지 필요했던 것"
+title: "Claude가 작성한 패키지 매니저를 믿기까지 필요했던 것"
 description: "jpm은 Rust로 만든 2 MB짜리 JavaScript 패키지 매니저로, Claude Code Opus 5.5가 5일 만에 작성했다. 내가 어떻게 이끌었는지, 그리고 직접 한 줄도 타이핑하지 않은 코드를 왜 믿는지 이야기한다."
 date: 2026-10-14
 image: /blog/speed-chart.png

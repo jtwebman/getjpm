@@ -1,5 +1,5 @@
 ---
-title: "信任一个包管理器，需要做些什么"
+title: "信任一个由 Claude 编写的包管理器，需要做些什么"
 description: "jpm 是一个用 Rust 写的 2 MB JavaScript 包管理器，由 Claude Code Opus 5.5 在五天内写成。这篇讲我是怎么主导它的，以及为什么我信任一行都不是我敲的代码。"
 date: 2026-10-14
 image: /blog/speed-chart.png
